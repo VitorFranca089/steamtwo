@@ -104,6 +104,7 @@ export function LoginPage({ onLoggedIn, onNavigate }) {
         <ErrorNotice message={error} />
         <button className="primary-button" type="submit" disabled={submitting}>{submitting ? "Entrando…" : "Entrar"}</button>
         <p className="auth-switch">Não tem uma conta? <button type="button" onClick={() => onNavigate("signup")}>Cadastre-se</button></p>
+        <p className="auth-switch">Esqueceu a senha? <button type="button" onClick={() => onNavigate("esqueci-senha")}>Recuperar acesso</button></p>
       </form>
     </section>
   );

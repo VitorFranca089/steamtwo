@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, ArrowSquareOut, BookmarkSimple, CaretDown, ChartLineUp, Check, Circle, FunnelSimple, GameController, Info, MagnifyingGlass, Star, TrendUp, UserCircle, UsersThree, X } from "@phosphor-icons/react";
 import { LoginPage, ProfilePage, SignupPage } from "./AuthPages.jsx";
 import { MyProfilePage, PublicProfilePage } from "./ProfilePages.jsx";
+import { AccountSettingsPage, ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "./AccountPages.jsx";
 import { fetchCurrentUser, logout as logoutRequest } from "./auth-api.js";
 
 const games = {
@@ -73,6 +74,7 @@ function AccountBox({ user, onNavigate, onLogout }) {
   return <div className="account-box">
     <span className="account-name"><UserCircle size={20} />{user.username}{user.role === "admin" && <b className="admin-badge">ADMIN</b>}</span>
     <button className="account-link" onClick={() => onNavigate("perfil")}>Meu perfil</button>
+    <button className="account-link" onClick={() => onNavigate("conta")}>Configurações</button>
     {user.role !== "admin" && !user.isVerified && <button className="account-link" onClick={() => onNavigate("verify")}>Completar perfil</button>}
     <button className="account-link" onClick={onLogout}>Sair</button>
   </div>;
@@ -137,6 +139,7 @@ export function App() {
   const [methodology, setMethodology] = useState(false);
   const [user, setUser] = useState(null);
   const [publicProfileUsername, setPublicProfileUsername] = useState(null);
+  const [authToken, setAuthToken] = useState(null);
 
   useEffect(() => { fetchCurrentUser().then(setUser).catch(() => setUser(null)); }, []);
 
@@ -156,6 +159,10 @@ export function App() {
       else if (path.startsWith("/rankings")) { setSelected(null); setView("rankings"); }
       else if (path.startsWith("/entrar")) { setSelected(null); setView("login"); }
       else if (path.startsWith("/cadastro")) { setSelected(null); setView("signup"); }
+      else if (path.startsWith("/esqueci-senha")) { setSelected(null); setView("esqueci-senha"); }
+      else if (path.startsWith("/redefinir-senha")) { setSelected(null); setAuthToken(new URLSearchParams(window.location.search).get("token")); setView("redefinir-senha"); }
+      else if (path.startsWith("/verificar-email")) { setSelected(null); setAuthToken(new URLSearchParams(window.location.search).get("token")); setView("verificar-email"); }
+      else if (path.startsWith("/conta")) { setSelected(null); setView("conta"); }
       else if (path.startsWith("/perfil/verificar")) { setSelected(null); setPublicProfileUsername(null); setView("verify"); }
       else if (path === "/perfil" || path === "/perfil/") { setSelected(null); setPublicProfileUsername(null); setView("perfil"); }
       else if (path.startsWith("/perfil/")) {
@@ -187,7 +194,7 @@ export function App() {
     return () => controller.abort();
   }, []);
 
-  const viewPaths = { home: "/", catalog: "/catalogo", rankings: "/rankings", login: "/entrar", signup: "/cadastro", perfil: "/perfil", verify: "/perfil/verificar" };
+  const viewPaths = { home: "/", catalog: "/catalogo", rankings: "/rankings", login: "/entrar", signup: "/cadastro", perfil: "/perfil", verify: "/perfil/verificar", conta: "/conta", "esqueci-senha": "/esqueci-senha" };
   const navigate = (next) => {
     setSelected(null);
     setPublicProfileUsername(null);
@@ -197,6 +204,7 @@ export function App() {
   };
   const handleAuthed = (nextUser) => { setUser(nextUser); navigate("home"); };
   const handleLogout = () => { logoutRequest().then(() => { setUser(null); navigate("home"); }); };
+  const handleForceLogout = () => { setUser(null); navigate("login"); };
   const details = (game) => {
     if (!game) return navigate("rankings");
     const normalized = normalizeGame(game, fallbackForSlug(game.slug) || {});
@@ -205,5 +213,5 @@ export function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
     loadDetail(normalized.slug, normalized);
   };
-  return <div className="app-shell"><Header view={selected ? "" : view} onNavigate={navigate} search={search} setSearch={setSearch} user={user} onLogout={handleLogout} />{loading && <div className="loading-bar" aria-label="Carregando dados" />}<main>{selected ? <Detail game={selected} onBack={() => navigate("home")} onMethodology={() => setMethodology(true)} /> : view === "login" ? <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} /> : view === "signup" ? <SignupPage onSignedUp={() => navigate("login")} onNavigate={navigate} /> : view === "verify" ? (user ? <ProfilePage onCompleted={() => navigate("perfil")} /> : <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} />) : view === "perfil" ? (user ? <MyProfilePage user={user} onVerify={() => navigate("verify")} /> : <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} />) : view === "publicProfile" ? <PublicProfilePage username={publicProfileUsername} onBack={() => navigate("home")} /> : view === "catalog" ? <Catalog data={data} query={search} onDetails={details} /> : view === "rankings" ? <Rankings data={data} onDetails={details} /> : <Home data={data} onDetails={details} onMethodology={() => setMethodology(true)} />}</main><footer><span>SteamTwo</span><span>Dados públicos, rankings transparentes.</span><button onClick={() => setMethodology(true)}>Metodologia</button>{stale && <small>Últimos dados válidos · {formatDate(data.updatedAt)}</small>}</footer>{methodology && <Methodology onClose={() => setMethodology(false)} />}</div>;
+  return <div className="app-shell"><Header view={selected ? "" : view} onNavigate={navigate} search={search} setSearch={setSearch} user={user} onLogout={handleLogout} />{loading && <div className="loading-bar" aria-label="Carregando dados" />}<main>{selected ? <Detail game={selected} onBack={() => navigate("home")} onMethodology={() => setMethodology(true)} /> : view === "login" ? <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} /> : view === "signup" ? <SignupPage onSignedUp={() => navigate("login")} onNavigate={navigate} /> : view === "verify" ? (user ? <ProfilePage onCompleted={() => navigate("perfil")} /> : <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} />) : view === "perfil" ? (user ? <MyProfilePage user={user} onVerify={() => navigate("verify")} /> : <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} />) : view === "publicProfile" ? <PublicProfilePage username={publicProfileUsername} onBack={() => navigate("home")} /> : view === "conta" ? (user ? <AccountSettingsPage onLoggedOut={handleForceLogout} /> : <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} />) : view === "esqueci-senha" ? <ForgotPasswordPage onNavigate={navigate} /> : view === "redefinir-senha" ? <ResetPasswordPage token={authToken} onNavigate={navigate} /> : view === "verificar-email" ? <VerifyEmailPage token={authToken} onNavigate={navigate} /> : view === "catalog" ? <Catalog data={data} query={search} onDetails={details} /> : view === "rankings" ? <Rankings data={data} onDetails={details} /> : <Home data={data} onDetails={details} onMethodology={() => setMethodology(true)} />}</main><footer><span>SteamTwo</span><span>Dados públicos, rankings transparentes.</span><button onClick={() => setMethodology(true)}>Metodologia</button>{stale && <small>Últimos dados válidos · {formatDate(data.updatedAt)}</small>}</footer>{methodology && <Methodology onClose={() => setMethodology(false)} />}</div>;
 }

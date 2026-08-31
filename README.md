@@ -13,7 +13,11 @@ Catálogo de jogos com dashboard de popularidade da Steam e Epic Games, interfac
 - cadastro e login de usuários (username/e-mail únicos, senha forte, sessão via cookie);
 - regularização de conta com nome completo, data de nascimento e CPF (verificação de idade);
 - perfil de usuário com foto e capa (upload real), favoritos, wishlist e conquistas
-  criadas pelo próprio usuário, além de uma versão pública somente leitura (`/perfil/:username`).
+  criadas pelo próprio usuário, além de uma versão pública somente leitura (`/perfil/:username`);
+- tela de configurações da conta (`/conta`) com verificação de e-mail, troca de
+  username/e-mail/senha e edição dos dados pessoais;
+- recuperação de senha por token enviado por e-mail (`/esqueci-senha`, `/redefinir-senha`),
+  com um mail sender reutilizável (via Mailtrap/SMTP) para futuras notificações.
 
 ## Como os rankings funcionam
 
@@ -45,7 +49,13 @@ acesso irrestrito à plataforma. Por padrão: username `admin`, e-mail
 `admin@steamtwo.dev`, senha `Admin@12345` — sobrescreva com `ADMIN_USERNAME`,
 `ADMIN_EMAIL` e `ADMIN_PASSWORD` no `.env`. Veja mais em
 [`docs/claude/feat-1`](./docs/claude/feat-1/README.md) (cadastro/login) e
-[`docs/claude/feat-2`](./docs/claude/feat-2/README.md) (perfil de usuário).
+[`docs/claude/feat-2`](./docs/claude/feat-2/README.md) (perfil de usuário e conta).
+
+Para os e-mails (verificação de conta e "esqueci minha senha") funcionarem de
+verdade, preencha `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` no `.env` com as
+credenciais SMTP de uma inbox do [Mailtrap](https://mailtrap.io) — sem isso a
+aplicação roda normalmente, só não envia e-mails. Veja
+[`docs/claude/feat-2/07-como-testar-conta.md`](./docs/claude/feat-2/07-como-testar-conta.md).
 
 Frontend: `http://127.0.0.1:5173/`  
 API: `http://127.0.0.1:3001/api/health`

@@ -12,6 +12,7 @@ import { createCatalogService } from "./services/catalog-service.js";
 import { createAuthService } from "./services/auth-service.js";
 import { createProfileService } from "./services/profile-service.js";
 import { createUploadStorage } from "./uploads/storage.js";
+import { createMailer } from "./integrations/mailer.js";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const staticDir = path.join(rootDir, "dist", "client");
@@ -25,7 +26,8 @@ let uploadStorage = null;
 if (config.databaseUrl) {
   pool = createPool(config.databaseUrl);
   catalogRepository = createCatalogReadRepository(pool);
-  authService = createAuthService({ repository: createUsersRepository(pool) });
+  const mailer = createMailer(config.smtp);
+  authService = createAuthService({ repository: createUsersRepository(pool), mailer, appBaseUrl: config.appBaseUrl });
   profileService = createProfileService({ repository: createProfileRepository(pool) });
   uploadStorage = createUploadStorage({ rootDir: uploadsRootDir });
   uploadStorage.ensureDirs();

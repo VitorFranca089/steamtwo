@@ -56,3 +56,28 @@ export const profileSchema = z
     message: `É necessário ter ${MINIMUM_AGE_YEARS} anos ou mais para se regularizar na plataforma`,
     path: ["birthDate"],
   });
+
+export const usernameChangeSchema = z.object({ username: usernameSchema });
+
+export const emailChangeSchema = z.object({
+  email: emailSchema,
+  currentPassword: z.string().min(1, "Informe sua senha atual"),
+});
+
+export const passwordChangeSchema = z.object({
+  currentPassword: z.string().min(1, "Informe sua senha atual"),
+  newPassword: passwordSchema,
+});
+
+export const forgotPasswordSchema = z.object({
+  identifier: z.string().trim().min(1, "Informe seu usuário ou e-mail"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Token inválido"),
+  password: passwordSchema,
+});
+
+export const verifyEmailSchema = z.object({
+  token: z.string().min(1, "Token inválido"),
+});

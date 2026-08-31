@@ -40,6 +40,54 @@ export async function completeProfile({ fullName, birthDate, cpf }) {
   return payload.profile;
 }
 
+export async function fetchAccount() {
+  const payload = await parseResponse(await fetch("/api/auth/account"));
+  return payload.account;
+}
+
+export async function updateUsername({ username }) {
+  const payload = await parseResponse(
+    await fetch("/api/auth/username", { method: "PATCH", headers: jsonHeaders, body: JSON.stringify({ username }) }),
+  );
+  return payload.account;
+}
+
+export async function updateEmail({ email, currentPassword }) {
+  const payload = await parseResponse(
+    await fetch("/api/auth/email", { method: "PATCH", headers: jsonHeaders, body: JSON.stringify({ email, currentPassword }) }),
+  );
+  return payload.account;
+}
+
+export async function changePassword({ currentPassword, newPassword }) {
+  await parseResponse(
+    await fetch("/api/auth/password/change", { method: "POST", headers: jsonHeaders, body: JSON.stringify({ currentPassword, newPassword }) }),
+  );
+}
+
+export async function requestPasswordReset({ identifier }) {
+  const payload = await parseResponse(
+    await fetch("/api/auth/password/forgot", { method: "POST", headers: jsonHeaders, body: JSON.stringify({ identifier }) }),
+  );
+  return payload.message;
+}
+
+export async function resetPassword({ token, password }) {
+  await parseResponse(
+    await fetch("/api/auth/password/reset", { method: "POST", headers: jsonHeaders, body: JSON.stringify({ token, password }) }),
+  );
+}
+
+export async function requestEmailVerification() {
+  await parseResponse(await fetch("/api/auth/email/verify/request", { method: "POST" }));
+}
+
+export async function confirmEmailVerification({ token }) {
+  await parseResponse(
+    await fetch("/api/auth/email/verify/confirm", { method: "POST", headers: jsonHeaders, body: JSON.stringify({ token }) }),
+  );
+}
+
 export function passwordChecklist(password = "") {
   return [
     { label: "Pelo menos 8 caracteres", met: password.length >= 8 },

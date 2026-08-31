@@ -53,7 +53,7 @@ describe("auth service", () => {
   it("cadastra um usuário e nunca expõe o hash da senha", async () => {
     const service = createAuthService({ repository: fakeRepository() });
     const user = await service.signup({ username: "jogador1", email: "jogador1@exemplo.com", password: "Senha@123" });
-    expect(user).toEqual({ id: "1", username: "jogador1", email: "jogador1@exemplo.com", role: "user", isVerified: false });
+    expect(user).toEqual({ id: "1", username: "jogador1", email: "jogador1@exemplo.com", role: "user", isVerified: false, emailVerified: false });
   });
 
   it("rejeita cadastro com nome de usuário duplicado", async () => {

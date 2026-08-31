@@ -57,5 +57,77 @@ export function createAuthRouter({ authService }) {
     }
   });
 
+  router.get("/account", requireAuth, async (request, response, next) => {
+    try {
+      response.json({ account: await authService.getAccount(request.user.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch("/username", requireAuth, async (request, response, next) => {
+    try {
+      const account = await authService.changeUsername(request.user.id, request.body);
+      response.json({ account });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch("/email", requireAuth, async (request, response, next) => {
+    try {
+      const account = await authService.changeEmail(request.user.id, request.body);
+      response.json({ account });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/password/change", requireAuth, async (request, response, next) => {
+    try {
+      await authService.changePassword(request.user.id, request.body);
+      response.clearCookie(SESSION_COOKIE, { path: "/" });
+      response.status(204).end();
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/password/forgot", async (request, response, next) => {
+    try {
+      await authService.requestPasswordReset(request.body);
+      response.json({ message: "Se existir uma conta com esses dados, enviamos um e-mail com instruções." });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/password/reset", async (request, response, next) => {
+    try {
+      await authService.resetPassword(request.body);
+      response.status(204).end();
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/email/verify/request", requireAuth, async (request, response, next) => {
+    try {
+      await authService.requestEmailVerification(request.user.id);
+      response.status(204).end();
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/email/verify/confirm", async (request, response, next) => {
+    try {
+      await authService.confirmEmailVerification(request.body);
+      response.status(204).end();
+    } catch (error) {
+      next(error);
+    }
+  });
+
   return router;
 }
