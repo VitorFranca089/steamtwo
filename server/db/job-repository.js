@@ -48,7 +48,11 @@ export async function createJobRepository({ databaseUrl, pool: suppliedPool } = 
   }
 
   async function transaction(clientOrPool, work) {
-    if (typeof clientOrPool.connect === "function") return withTransaction(clientOrPool, work);
+    // `pg` Client/PoolClient instances also expose `.connect`, so identity
+    // against the closed-over `pool` is the only reliable way to tell "the
+    // pool itself" (needs its own connect+release) apart from "a client the
+    // advisory lock already connected" (must reuse it, not reconnect).
+    if (clientOrPool === pool) return withTransaction(clientOrPool, work);
     await clientOrPool.query("BEGIN");
     try {
       const result = await work(clientOrPool);
@@ -116,7 +120,7 @@ export async function createJobRepository({ databaseUrl, pool: suppliedPool } = 
       return enqueue(async (client) => {
         const state = status === "success" ? "success" : "failed";
         const result = await client.query(`UPDATE sync_runs
-          SET state = $2, finished_at = $3, details = jsonb_build_object('records', $4), error_message = $5
+          SET state = $2, finished_at = $3, details = jsonb_build_object('records', $4::int), error_message = $5
           WHERE id = $1 RETURNING id, state`, [id, state, finishedAt, records, error]);
         return result.rows[0] ?? null;
       });

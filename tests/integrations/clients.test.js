@@ -10,17 +10,22 @@ function response(value) {
 }
 
 describe("IGDB client", () => {
-  it("obtém token, normaliza o catálogo e reutiliza o token", async () => {
+  it("obtém token, cruza popularity_primitives com /games e reutiliza o token", async () => {
     const token = await fixture("igdb-token.json");
+    const primitives = await fixture("igdb-popularity-primitives.json");
     const games = await fixture("igdb-games.json");
     const fetchImpl = vi.fn()
       .mockResolvedValueOnce(response(token))
+      .mockResolvedValueOnce(response(primitives))
       .mockResolvedValueOnce(response(games))
+      .mockResolvedValueOnce(response(primitives))
       .mockResolvedValueOnce(response(games));
     const client = createIgdbClient({ clientId: "client", clientSecret: "secret", fetchImpl, now: () => 1_000 });
     const catalog = await client.listCatalog();
     await client.listHistoricalPopularity();
-    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(fetchImpl).toHaveBeenCalledTimes(5);
+    expect(String(fetchImpl.mock.calls[1][0])).toContain("popularity_primitives");
+    expect(String(fetchImpl.mock.calls[2][0])).toContain("/games");
     expect(catalog[0]).toMatchObject({ externalId: "7346", title: "Hades", popularity: 88.4 });
     expect(catalog[0].stores).toEqual([{ store: "steam", externalId: "1145360" }, { store: "epic", externalId: "hades" }]);
     expect(catalog[0].coverUrl).toContain("co1r7f");
