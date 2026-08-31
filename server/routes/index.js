@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createCatalogService } from "../services/catalog-service.js";
 import { createAuthRouter } from "./auth.js";
 import { createProfileRouter } from "./profile.js";
+import { createAdminRouter } from "./admin.js";
 import { createSessionMiddleware } from "../middleware/auth.js";
 
 const storeSchema = z.enum(["all", "steam", "epic"]).default("all");
@@ -10,24 +11,29 @@ const periodSchema = z.enum(["now", "week", "all-time"]).default("now");
 const pageSchema = z.coerce.number().int().min(1).default(1);
 const limitSchema = z.coerce.number().int().min(1).max(100).default(20);
 
+// A pontuação vem inteiramente da popularidade do IGDB (ver docs/claude/feat-3):
+// Steam/Epic deixaram de alimentar o ranking, mas continuam sendo a origem dos
+// links de "Abrir na loja" quando o IGDB identifica o jogo nessas lojas.
 const methodology = {
   name: "Índice SteamTwo",
-  formula: "100 × (N - posição + 1) / N",
+  formula: "Popularidade normalizada do IGDB (escala 0-100+)",
   rules: [
-    "Jogos presentes nas duas lojas recebem a média das notas disponíveis.",
-    "Ausência em uma coleta válida vale zero; indisponibilidade da fonte é excluída.",
-    "A semana representa a média dos sete snapshots diários válidos.",
-    "De sempre é popularidade histórica, não uma contagem de horas jogadas.",
+    "A pontuação vem do sinal de popularidade do IGDB — a mesma fonte do catálogo, capas e gêneros.",
+    "Links de loja (Steam/Epic) continuam aparecendo quando o IGDB identifica o jogo nessas lojas, mas não influenciam mais a pontuação.",
+    "Jogos recém-sincronizados sem popularidade registrada no IGDB começam com pontuação zero até a próxima sincronização.",
+    "De sempre é popularidade histórica do IGDB, não uma contagem de horas jogadas.",
   ],
-  sources: ["Steam Charts", "Epic Games Store — Mais jogados", "IGDB PopScore"],
+  sources: ["IGDB"],
 };
 
 export function createApiRouter({
   catalogService = createCatalogService(),
   authService,
   profileService,
+  adminCatalogService,
   avatarUpload,
   coverUpload,
+  gameImageUpload,
   avatarsDir,
   coversDir,
   healthCheck,
@@ -38,6 +44,9 @@ export function createApiRouter({
   if (authService) router.use("/auth", createAuthRouter({ authService }));
   if (profileService) {
     router.use("/profile", createProfileRouter({ profileService, avatarUpload, coverUpload, avatarsDir, coversDir }));
+  }
+  if (adminCatalogService) {
+    router.use("/admin", createAdminRouter({ adminCatalogService, gameImageUpload }));
   }
 
   router.get("/health", async (_request, response, next) => {
@@ -81,6 +90,7 @@ export function createApiRouter({
         sort: z.enum(["popularity", "name"]).default("popularity"),
         page: pageSchema,
         limit: limitSchema.default(12),
+        independent: z.coerce.boolean().default(false),
       }).parse(request.query);
       response.json(await catalogService.games(query));
     } catch (error) {

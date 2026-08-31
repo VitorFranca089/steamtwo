@@ -1,8 +1,10 @@
-# Feature 3 — Integração com o IGDB (sincronização de catálogo)
+# Feature 3 — Integração com o IGDB, índice só-IGDB e busca
 
 Status: ativado e verificado contra o IGDB real. 100 jogos sincronizados
-(`npm run sync:catalog` e `npm run sync:popularity`), 97 testes automatizados
-passando (`npm test`), API local servindo os dados reais em `GET /api/games`.
+(`npm run sync:catalog` e `npm run sync:popularity`), 107 testes automatizados
+passando (`npm test`), API local servindo os dados reais em `GET /api/games`,
+índice do site (score/ranking) rodando só com dado do IGDB, busca do
+cabeçalho funcionando em qualquer página.
 
 ## Índice
 
@@ -10,6 +12,10 @@ passando (`npm test`), API local servindo os dados reais em `GET /api/games`.
   bugs adormecidos encontrados e corrigidos ao rodar de verdade pela primeira
   vez, e a mudança de contrato do IGDB (`popularity` → `popularity_primitives`)
   que precisou ser tratada.
+- [`01-catalogo-so-igdb-e-busca.md`](./01-catalogo-so-igdb-e-busca.md) — por
+  que o índice já era, na prática, só-IGDB; o que foi desativado (não
+  removido) para tornar isso explícito; e o bug de UX que fazia a busca do
+  cabeçalho não funcionar fora da página de catálogo.
 
 ## Resumo rápido
 
@@ -23,3 +29,10 @@ passando (`npm test`), API local servindo os dados reais em `GET /api/games`.
   (via `/popularity_primitives`) e faz upsert idempotente por `slug`.
 - `npm run sync:popularity` — mesma fonte, atualiza só o índice de
   popularidade histórica dos jogos já existentes.
+- O Índice SteamTwo (score/ranking exibido no site) vem inteiramente da
+  popularidade do IGDB; Steam/Epic não influenciam mais a pontuação, só os
+  links de "Abrir na loja" (que também já vêm do IGDB, via `external_games`).
+  `npm run sync:rankings` (Steam Charts/Epic) continua no repositório mas
+  deixou de ser necessário — ver `01-catalogo-so-igdb-e-busca.md`.
+- A busca do cabeçalho agora funciona a partir de qualquer página: digitar
+  nela navega para `/catalogo` e aplica o filtro imediatamente.

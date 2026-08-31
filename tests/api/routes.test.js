@@ -10,7 +10,7 @@ describe("SteamTwo API", () => {
     const response = await request(app).get("/api/dashboard").expect(200);
     expect(response.body.hero.title).toBeTruthy();
     expect(response.body.topFive).toHaveLength(5);
-    expect(response.body.sourceStatus.steam).toBe("fresh");
+    expect(response.body.sourceStatus.igdb).toBe("fresh");
   });
 
   it("filtra catálogo por loja e busca", async () => {
