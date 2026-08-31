@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, GameController, MagnifyingGlass, Plus, Trash, Trophy, WarningCircle, X } from "@phosphor-icons/react";
+import { Camera, Gear, GameController, MagnifyingGlass, Plus, Trash, Trophy, UserCircle, WarningCircle, X } from "@phosphor-icons/react";
 import { SafeImage } from "./App.jsx";
 import { ToastStack, useToasts } from "./Toast.jsx";
 import {
@@ -75,6 +75,11 @@ function GamePicker({ onSelect, placeholder = "Buscar jogo…" }) {
   );
 }
 
+function AvatarImage({ src }) {
+  if (!src) return <div className="profile-avatar profile-avatar-placeholder"><UserCircle size={64} weight="thin" /></div>;
+  return <SafeImage className="profile-avatar" src={src} alt="Foto de perfil" />;
+}
+
 function AvatarCoverEditor({ avatarUrl, coverUrl, onAvatarSaved, onCoverSaved, notify }) {
   const [preview, setPreview] = useState({ avatar: avatarUrl, cover: coverUrl });
   const [uploading, setUploading] = useState({ avatar: false, cover: false });
@@ -109,7 +114,7 @@ function AvatarCoverEditor({ avatarUrl, coverUrl, onAvatarSaved, onCoverSaved, n
       </button>
       <input ref={coverInput} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(event) => handleUpload(event, "cover")} />
       <div className="profile-avatar-wrap">
-        <SafeImage className="profile-avatar" src={preview.avatar} alt="Foto de perfil" />
+        <AvatarImage src={preview.avatar} />
         {uploading.avatar && <span className="profile-avatar-loading" aria-hidden="true" />}
         <button type="button" className="profile-avatar-input" onClick={() => avatarInput.current?.click()} disabled={uploading.avatar} aria-label="Trocar foto de perfil">
           <Camera size={16} />
@@ -234,7 +239,7 @@ function AchievementsSection({ items, editable, onCreate, onDelete, notify }) {
   );
 }
 
-function ProfileBody({ profile, editable, notify, onAvatarSaved, onCoverSaved, onAddFavorite, onRemoveFavorite, onAddWishlist, onRemoveWishlist, onCreateAchievement, onDeleteAchievement }) {
+function ProfileBody({ profile, editable, notify, onAvatarSaved, onCoverSaved, onAddFavorite, onRemoveFavorite, onAddWishlist, onRemoveWishlist, onCreateAchievement, onDeleteAchievement, onSettings }) {
   return (
     <>
       {editable ? (
@@ -242,11 +247,18 @@ function ProfileBody({ profile, editable, notify, onAvatarSaved, onCoverSaved, o
       ) : (
         <div className="profile-header profile-header-static" style={profile.coverUrl ? { "--profile-cover": `url(${profile.coverUrl})` } : undefined}>
           <div className="profile-avatar-wrap">
-            <SafeImage className="profile-avatar" src={profile.avatarUrl} alt="Foto de perfil" />
+            <AvatarImage src={profile.avatarUrl} />
           </div>
         </div>
       )}
-      <h1 className="profile-username">{profile.user.username}</h1>
+      <div className="profile-title-row">
+        <h1 className="profile-username">{profile.user.username}</h1>
+        {editable && onSettings && (
+          <button type="button" className="profile-settings-button" onClick={onSettings} aria-label="Configurações da conta">
+            <Gear size={20} />
+          </button>
+        )}
+      </div>
       <GameListSection
         title="Favoritos"
         items={profile.favorites}
@@ -276,7 +288,7 @@ function ProfileBody({ profile, editable, notify, onAvatarSaved, onCoverSaved, o
 
 const LIST_LABELS = { favorites: { added: "adicionado aos favoritos", removed: "Jogo removido dos favoritos." }, wishlist: { added: "adicionado à wishlist", removed: "Jogo removido da wishlist." } };
 
-export function MyProfilePage({ user, onVerify }) {
+export function MyProfilePage({ user, onVerify, onSettings }) {
   const [profile, setProfile] = useState(null);
   const [loadError, setLoadError] = useState("");
   const { toasts, notify, dismiss } = useToasts();
@@ -330,6 +342,7 @@ export function MyProfilePage({ user, onVerify }) {
         profile={profile}
         editable
         notify={notify}
+        onSettings={onSettings}
         onAvatarSaved={(media) => setProfile((current) => ({ ...current, avatarUrl: media.avatarUrl }))}
         onCoverSaved={(media) => setProfile((current) => ({ ...current, coverUrl: media.coverUrl }))}
         onAddFavorite={addGame("favorites")}

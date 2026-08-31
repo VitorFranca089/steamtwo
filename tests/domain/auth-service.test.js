@@ -22,6 +22,9 @@ function fakeRepository() {
     async findByIdentifier(identifier) {
       return users.find((user) => user.username === identifier || user.email === identifier) ?? null;
     },
+    async findById(id) {
+      return users.find((user) => user.id === id) ?? null;
+    },
     async upsertProfile({ userId, fullName, birthDate, cpf }) {
       if (users.some((user) => user.id !== userId && user.cpf === cpf)) throw uniqueViolation("user_profiles_cpf_key");
       const user = users.find((candidate) => candidate.id === userId);
@@ -117,5 +120,18 @@ describe("auth service", () => {
     await service.completeProfile(first.id, { fullName: "Fulano", birthDate: "2000-01-01", cpf: "100.000.000-19" });
     await expect(service.completeProfile(second.id, { fullName: "Ciclano", birthDate: "2000-01-01", cpf: "100.000.000-19" }))
       .rejects.toMatchObject({ status: 409 });
+  });
+
+  it("permite atualizar nome/data mantendo o mesmo CPF, mas rejeita trocar o CPF depois de verificado", async () => {
+    const repository = fakeRepository();
+    const service = createAuthService({ repository });
+    const user = await service.signup({ username: "jogador1", email: "jogador1@exemplo.com", password: "Senha@123" });
+    await service.completeProfile(user.id, { fullName: "Fulano", birthDate: "2000-01-01", cpf: "100.000.000-19" });
+
+    await expect(service.completeProfile(user.id, { fullName: "Fulano da Silva", birthDate: "2000-01-01", cpf: "100.000.000-19" }))
+      .resolves.toMatchObject({ fullName: "Fulano da Silva" });
+
+    await expect(service.completeProfile(user.id, { fullName: "Fulano", birthDate: "2000-01-01", cpf: "529.982.247-25" }))
+      .rejects.toMatchObject({ status: 409, message: expect.stringContaining("CPF não pode ser alterado") });
   });
 });

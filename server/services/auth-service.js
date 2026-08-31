@@ -98,6 +98,10 @@ export function createAuthService({ repository, mailer, appBaseUrl = "" }) {
 
     async completeProfile(userId, input) {
       const { fullName, birthDate, cpf } = profileSchema.parse(input);
+      const existing = await repository.findById(userId);
+      if (existing?.cpf && existing.cpf !== cpf) {
+        throw conflictError("O CPF não pode ser alterado após a verificação");
+      }
       try {
         return await repository.upsertProfile({ userId, fullName, birthDate, cpf });
       } catch (error) {

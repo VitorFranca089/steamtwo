@@ -27,7 +27,9 @@ export function createApp({ apiRouter, staticDir, uploadsDir } = {}) {
         ? "Erro interno do servidor"
         : isMulterError
           ? "Arquivo inválido ou maior que o limite permitido (5MB)"
-          : error.message,
+          : isValidationError
+            ? (error.issues?.[0]?.message ?? "Dados inválidos")
+            : error.message,
       ...(isValidationError ? { details: error.issues } : {}),
     });
   });

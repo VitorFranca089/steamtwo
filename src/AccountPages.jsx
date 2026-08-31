@@ -104,7 +104,7 @@ function EmailForm({ account, notify, onUpdated }) {
 function PersonalDataForm({ account, notify, onUpdated }) {
   const [fullName, setFullName] = useState(account.fullName ?? "");
   const [birthDate, setBirthDate] = useState(account.birthDate ? account.birthDate.slice(0, 10) : "");
-  const [cpf, setCpf] = useState(account.cpf ?? "");
+  const cpf = account.cpf ?? "";
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (event) => {
@@ -132,8 +132,8 @@ function PersonalDataForm({ account, notify, onUpdated }) {
         <div className="auth-field"><CalendarBlank size={18} /><input required type="date" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} /></div>
       </label>
       <label className="settings-field">
-        <span>CPF</span>
-        <div className="auth-field"><IdentificationCard size={18} /><input required value={cpf} onChange={(event) => setCpf(event.target.value)} /></div>
+        <span>CPF (não pode ser alterado)</span>
+        <div className="auth-field auth-field-disabled"><IdentificationCard size={18} /><input required value={cpf} disabled /></div>
       </label>
       <button className="list-button" type="submit" disabled={submitting}>{submitting ? "Salvando…" : "Salvar dados pessoais"}</button>
     </form>

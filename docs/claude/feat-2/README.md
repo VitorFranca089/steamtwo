@@ -5,14 +5,17 @@ em sua própria sequência de arquivos abaixo:
 
 1. **Perfil público** (foto, capa, favoritos, wishlist, conquistas) — docs `00`–`04`.
 2. **Conta, verificação de e-mail e redefinição de senha** — docs `05`–`07`.
+3. **Correções de UX/segurança** pedidas depois do uso real (engrenagem de
+   configurações, bloqueio de `/conta` sem KYC, avatar sem foto, CPF travado,
+   mensagens de erro legíveis) — doc `08`.
 
-Status: implementado, coberto por testes automatizados (95 testes no total,
-`npm test`, sendo 39 novos entre as duas partes desta feature), build de
+Status: implementado, coberto por testes automatizados (97 testes no total,
+`npm test`, sendo 41 novos entre as três partes desta feature), build de
 produção (`npm run build`) e **testado manualmente ponta a ponta em navegador
 real** (Chromium via Playwright, nesta sessão) — cadastro → upload de
 avatar/capa → favoritos → wishlist → conquista → perfil público → verificação
 de e-mail com link real clicado → troca de username/e-mail/senha → esqueci a
-senha → KYC (Feature 1) ainda funcionando.
+senha → bloqueio de `/conta` sem KYC → KYC (Feature 1) ainda funcionando.
 
 ## Índice
 
@@ -27,6 +30,7 @@ senha → KYC (Feature 1) ainda funcionando.
 - [`05-conta-verificacao-e-senha.md`](./05-conta-verificacao-e-senha.md) — escopo, decisões e o que ficou de fora
 - [`06-mailer-e-api.md`](./06-mailer-e-api.md) — mail sender reutilizável, modelo de dados e contrato das novas rotas `/api/auth/*`
 - [`07-como-testar-conta.md`](./07-como-testar-conta.md) — configurar o Mailtrap, rodar e testar
+- [`08-correcoes-avatar-conta-e-seguranca.md`](./08-correcoes-avatar-conta-e-seguranca.md) — engrenagem de configurações, bloqueio de `/conta` sem KYC, avatar sem foto, CPF travado e mensagens de erro legíveis
 
 ## Resumo rápido
 

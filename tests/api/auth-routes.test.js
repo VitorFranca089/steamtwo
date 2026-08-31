@@ -23,6 +23,9 @@ function fakeRepository() {
     async findByIdentifier(identifier) {
       return users.find((user) => user.username === identifier || user.email === identifier) ?? null;
     },
+    async findById(id) {
+      return users.find((user) => user.id === id) ?? null;
+    },
     async upsertProfile({ userId, fullName, birthDate, cpf }) {
       const user = users.find((candidate) => candidate.id === userId);
       user.cpf = cpf;
@@ -95,6 +98,18 @@ describe("auth routes", () => {
     await request(app).post("/api/auth/profile")
       .send({ fullName: "Fulano da Silva", birthDate: "2000-01-01", cpf: "100.000.000-19" })
       .expect(401);
+  });
+
+  it("retorna uma mensagem legível (não JSON bruto) para CPF inválido", async () => {
+    const app = buildApp();
+    const agent = request.agent(app);
+    await agent.post("/api/auth/signup").send({ username: "jogador1", email: "jogador1@exemplo.com", password: "Senha@123" }).expect(201);
+    await agent.post("/api/auth/login").send({ identifier: "jogador1", password: "Senha@123" }).expect(200);
+
+    const response = await agent.post("/api/auth/profile")
+      .send({ fullName: "Fulano da Silva", birthDate: "2000-01-01", cpf: "111.111.111-11" })
+      .expect(400);
+    expect(response.body.error).toBe("CPF inválido");
   });
 
   it("completa o perfil autenticado e derruba a sessão no logout", async () => {
