@@ -5,17 +5,21 @@ import { createApp } from "./app.js";
 import { config } from "./config.js";
 import { createPool } from "./db/pool.js";
 import { createCatalogReadRepository } from "./db/catalog-read-repository.js";
+import { createUsersRepository } from "./db/users-repository.js";
 import { createApiRouter } from "./routes/index.js";
 import { createCatalogService } from "./services/catalog-service.js";
+import { createAuthService } from "./services/auth-service.js";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const staticDir = path.join(rootDir, "dist", "client");
 let pool = null;
 let catalogRepository = null;
+let authService = null;
 
 if (config.databaseUrl) {
   pool = createPool(config.databaseUrl);
   catalogRepository = createCatalogReadRepository(pool);
+  authService = createAuthService({ repository: createUsersRepository(pool) });
 }
 
 const catalogService = createCatalogService({ repository: catalogRepository });
@@ -27,7 +31,7 @@ const healthCheck = pool
   : async () => ({ status: "not-configured", mode: "demo" });
 
 const app = createApp({
-  apiRouter: createApiRouter({ catalogService, healthCheck }),
+  apiRouter: createApiRouter({ catalogService, authService, healthCheck }),
   staticDir: existsSync(staticDir) ? staticDir : undefined,
 });
 

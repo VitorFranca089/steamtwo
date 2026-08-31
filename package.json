@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "db:migrate": "node-pg-migrate up",
     "db:rollback": "node-pg-migrate down",
+    "db:seed": "node scripts/seed-admin.mjs",
     "sync:catalog": "node server/jobs/cli.js catalog",
     "sync:rankings": "node server/jobs/cli.js rankings",
     "sync:popularity": "node server/jobs/cli.js popularity",
@@ -21,13 +22,15 @@
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
     "@vitejs/plugin-react": "5.0.4",
+    "bcryptjs": "^3.0.3",
     "cheerio": "^1.1.2",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "pg": "^8.16.3",
-    "vite": "6.4.2",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "vite": "6.4.2",
     "zod": "^4.1.5"
   },
   "devDependencies": {

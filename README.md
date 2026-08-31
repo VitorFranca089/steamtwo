@@ -9,7 +9,9 @@ Catálogo de jogos com dashboard de popularidade da Steam e Epic Games, interfac
 - ranking combinado transparente;
 - página de detalhes com link para a loja oficial;
 - coleta da Steam, Epic Games e IGDB com snapshots imutáveis;
-- fallback visual com dados realistas quando o PostgreSQL ainda não foi configurado.
+- fallback visual com dados realistas quando o PostgreSQL ainda não foi configurado;
+- cadastro e login de usuários (username/e-mail únicos, senha forte, sessão via cookie);
+- regularização de conta com nome completo, data de nascimento e CPF (verificação de idade).
 
 ## Como os rankings funcionam
 
@@ -31,9 +33,16 @@ npm install
 docker compose up -d
 copy .env.example .env
 npm run db:migrate
+npm run db:seed
 npm run dev:api
 npm run dev
 ```
+
+`npm run db:seed` cria (ou atualiza) um usuário administrador de teste com
+acesso irrestrito à plataforma. Por padrão: username `admin`, e-mail
+`admin@steamtwo.dev`, senha `Admin@12345` — sobrescreva com `ADMIN_USERNAME`,
+`ADMIN_EMAIL` e `ADMIN_PASSWORD` no `.env`. Veja mais em
+[`docs/claude/feat-1`](./docs/claude/feat-1/README.md).
 
 Frontend: `http://127.0.0.1:5173/`  
 API: `http://127.0.0.1:3001/api/health`

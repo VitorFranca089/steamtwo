@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownRight, ArrowRight, ArrowUpRight, ArrowSquareOut, BookmarkSimple, CaretDown, ChartLineUp, Check, Circle, FunnelSimple, GameController, Info, MagnifyingGlass, Star, TrendUp, UsersThree, X } from "@phosphor-icons/react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, ArrowSquareOut, BookmarkSimple, CaretDown, ChartLineUp, Check, Circle, FunnelSimple, GameController, Info, MagnifyingGlass, Star, TrendUp, UserCircle, UsersThree, X } from "@phosphor-icons/react";
+import { LoginPage, ProfilePage, SignupPage } from "./AuthPages.jsx";
+import { fetchCurrentUser, logout as logoutRequest } from "./auth-api.js";
 
 const games = {
   elden: { id: "elden-ring-shadow-of-the-erdtree", slug: "elden-ring-shadow-of-the-erdtree", title: "ELDEN RING Shadow of the Erdtree", shortTitle: "Elden Ring: Shadow of the Erdtree", coverUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/library_600x900_2x.jpg", heroUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/library_hero.jpg", score: 94.7, genres: ["RPG", "Ação", "Mundo aberto"], stores: ["steam"], trend: 5, summary: "O DLC que redefiniu as Terras Intermédias voltou ao topo. Picos de jogadores, avaliações excelentes e o hype da comunidade impulsionam Elden Ring como o destaque absoluto da semana.", metric: "18,4 mil jogadores simultâneos" },
@@ -63,7 +65,17 @@ const normalizeDashboard = (payload = {}, current = fallback) => ({
 const storeUrlForGame = (game) => game.storeLinks?.[game.stores?.[0]] || (game.stores?.[0] === "epic" ? `https://store.epicgames.com/en-US/browse?q=${encodeURIComponent(game.title)}` : `https://store.steampowered.com/search/?term=${encodeURIComponent(game.title)}`);
 function SafeImage({ src, alt, className = "", ...props }) { const [url, setUrl] = useState(src); return <img className={className} src={url} alt={alt} loading="lazy" onError={() => setUrl("https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80")} {...props} />; }
 function Trend({ value, compact = false }) { if (!value) return <span className="trend neutral">—</span>; const positive = value > 0; return <span className={`trend ${positive ? "positive" : "negative"}`}>{positive ? <ArrowUpRight size={compact ? 15 : 16} weight="bold" /> : <ArrowDownRight size={compact ? 15 : 16} weight="bold" />} {Math.abs(value)}</span>; }
-function Header({ view, onNavigate, search, setSearch }) { return <header className={`site-header ${view === "home" ? "site-header-overlay" : ""}`}><button className="brand" onClick={() => onNavigate("home")} aria-label="SteamTwo, início"><span>Steam</span><b>Two</b></button><nav aria-label="Navegação principal"><button className={view === "home" ? "active" : ""} onClick={() => onNavigate("home")}>Início</button><button className={view === "catalog" ? "active" : ""} onClick={() => onNavigate("catalog")}>Catálogo</button><button className={view === "rankings" ? "active" : ""} onClick={() => onNavigate("rankings")}>Rankings</button></nav><label className="search-box"><MagnifyingGlass size={20} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar jogos" aria-label="Buscar jogos" /></label></header>; }
+function AccountBox({ user, onNavigate, onLogout }) {
+  if (!user) {
+    return <div className="account-box"><button className="account-link" onClick={() => onNavigate("login")}>Entrar</button><button className="primary-button account-cta" onClick={() => onNavigate("signup")}>Criar conta</button></div>;
+  }
+  return <div className="account-box">
+    <span className="account-name"><UserCircle size={20} />{user.username}{user.role === "admin" && <b className="admin-badge">ADMIN</b>}</span>
+    {user.role !== "admin" && !user.isVerified && <button className="account-link" onClick={() => onNavigate("perfil")}>Completar perfil</button>}
+    <button className="account-link" onClick={onLogout}>Sair</button>
+  </div>;
+}
+function Header({ view, onNavigate, search, setSearch, user, onLogout }) { return <header className={`site-header ${view === "home" ? "site-header-overlay" : ""}`}><button className="brand" onClick={() => onNavigate("home")} aria-label="SteamTwo, início"><span>Steam</span><b>Two</b></button><nav aria-label="Navegação principal"><button className={view === "home" ? "active" : ""} onClick={() => onNavigate("home")}>Início</button><button className={view === "catalog" ? "active" : ""} onClick={() => onNavigate("catalog")}>Catálogo</button><button className={view === "rankings" ? "active" : ""} onClick={() => onNavigate("rankings")}>Rankings</button></nav><label className="search-box"><MagnifyingGlass size={20} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar jogos" aria-label="Buscar jogos" /></label><AccountBox user={user} onNavigate={onNavigate} onLogout={onLogout} /></header>; }
 function Score({ value, large = false }) { return <span className={large ? "score score-large" : "score"}>{formatScore(value)}</span>; }
 function Hero({ game, onDetails, onMethodology }) { return <section className="hero" style={{ "--hero-image": `url(${game.heroUrl})` }}><div className="hero-content"><div className="spotlight"><span>DATA SPOTLIGHT</span><Circle size={7} weight="fill" color="var(--blue)" /> <time>Segunda-feira, 24 de agosto de 2026</time></div><div className="eyebrow">O JOGO DO MOMENTO</div><h1>ELDEN RING <small>SHADOW <em>OF THE</em> ERDTREE</small></h1><p>{game.summary}</p><div className="hero-actions"><button className="primary-button" onClick={onDetails}>Ver detalhes</button><button className="list-button"><BookmarkSimple size={19} /> Adicionar à lista</button></div></div><aside className="hero-score"><div className="score-heading"><h2>Índice SteamTwo</h2><button onClick={onMethodology}>Como calculamos <Info size={15} /></button></div><div><Score value={game.score} large /> <span className="out-of">/100</span></div><p>Ranking combinado de Steam e Epic Games que considera tração recente, qualidade e engajamento da comunidade.</p><div className="score-lines"><span><TrendUp size={19} /> Tração (últ. 7 dias) <b>96</b></span><span><Star size={19} /> Qualidade (avaliações) <b>93</b></span><span><UsersThree size={19} /> Engajamento <b>95</b></span></div><small>Dados de 18–24 de ago. de 2026</small></aside></section>; }
 function TopStrip({ items, onDetails }) { return <section className="top-strip" aria-label="Top cinco da semana">{items.map((game, index) => <button className="top-item" key={game.id} onClick={() => onDetails(game)}><strong>{index + 1}</strong><SafeImage src={game.coverUrl} alt="" /><span><b>{game.shortTitle}</b><Score value={game.score} /><Trend value={game.trend} compact /></span></button>)}</section>; }
@@ -121,6 +133,9 @@ export function App() {
   const [view, setView] = useState("home");
   const [selected, setSelected] = useState(null);
   const [methodology, setMethodology] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => { fetchCurrentUser().then(setUser).catch(() => setUser(null)); }, []);
 
   const loadDetail = (slug, base) => {
     setLoading(true);
@@ -136,6 +151,9 @@ export function App() {
       const path = window.location.pathname;
       if (path.startsWith("/catalogo")) { setSelected(null); setView("catalog"); }
       else if (path.startsWith("/rankings")) { setSelected(null); setView("rankings"); }
+      else if (path.startsWith("/entrar")) { setSelected(null); setView("login"); }
+      else if (path.startsWith("/cadastro")) { setSelected(null); setView("signup"); }
+      else if (path.startsWith("/perfil")) { setSelected(null); setView("perfil"); }
       else if (path.startsWith("/jogos/")) {
         const slug = decodeURIComponent(path.slice("/jogos/".length));
         const base = fallbackForSlug(slug) || normalizeGame({ slug, title: slug.replace(/-/g, " ") });
@@ -159,12 +177,15 @@ export function App() {
     return () => controller.abort();
   }, []);
 
+  const viewPaths = { home: "/", catalog: "/catalogo", rankings: "/rankings", login: "/entrar", signup: "/cadastro", perfil: "/perfil" };
   const navigate = (next) => {
     setSelected(null);
     setView(next);
-    window.history.pushState({}, "", next === "home" ? "/" : `/${next === "catalog" ? "catalogo" : "rankings"}`);
+    window.history.pushState({}, "", viewPaths[next] ?? "/");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+  const handleAuthed = (nextUser) => { setUser(nextUser); navigate("home"); };
+  const handleLogout = () => { logoutRequest().then(() => { setUser(null); navigate("home"); }); };
   const details = (game) => {
     if (!game) return navigate("rankings");
     const normalized = normalizeGame(game, fallbackForSlug(game.slug) || {});
@@ -173,5 +194,5 @@ export function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
     loadDetail(normalized.slug, normalized);
   };
-  return <div className="app-shell"><Header view={selected ? "" : view} onNavigate={navigate} search={search} setSearch={setSearch} />{loading && <div className="loading-bar" aria-label="Carregando dados" />}<main>{selected ? <Detail game={selected} onBack={() => navigate("home")} onMethodology={() => setMethodology(true)} /> : view === "catalog" ? <Catalog data={data} query={search} onDetails={details} /> : view === "rankings" ? <Rankings data={data} onDetails={details} /> : <Home data={data} onDetails={details} onMethodology={() => setMethodology(true)} />}</main><footer><span>SteamTwo</span><span>Dados públicos, rankings transparentes.</span><button onClick={() => setMethodology(true)}>Metodologia</button>{stale && <small>Últimos dados válidos · {formatDate(data.updatedAt)}</small>}</footer>{methodology && <Methodology onClose={() => setMethodology(false)} />}</div>;
+  return <div className="app-shell"><Header view={selected ? "" : view} onNavigate={navigate} search={search} setSearch={setSearch} user={user} onLogout={handleLogout} />{loading && <div className="loading-bar" aria-label="Carregando dados" />}<main>{selected ? <Detail game={selected} onBack={() => navigate("home")} onMethodology={() => setMethodology(true)} /> : view === "login" ? <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} /> : view === "signup" ? <SignupPage onSignedUp={() => navigate("login")} onNavigate={navigate} /> : view === "perfil" ? (user ? <ProfilePage onCompleted={() => navigate("home")} /> : <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} />) : view === "catalog" ? <Catalog data={data} query={search} onDetails={details} /> : view === "rankings" ? <Rankings data={data} onDetails={details} /> : <Home data={data} onDetails={details} onMethodology={() => setMethodology(true)} />}</main><footer><span>SteamTwo</span><span>Dados públicos, rankings transparentes.</span><button onClick={() => setMethodology(true)}>Metodologia</button>{stale && <small>Últimos dados válidos · {formatDate(data.updatedAt)}</small>}</footer>{methodology && <Methodology onClose={() => setMethodology(false)} />}</div>;
 }

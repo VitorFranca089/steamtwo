@@ -1,10 +1,12 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import path from "node:path";
 
 export function createApp({ apiRouter, staticDir } = {}) {
   const app = express();
   app.disable("x-powered-by");
   app.use(express.json({ limit: "256kb" }));
+  app.use(cookieParser());
 
   if (apiRouter) app.use("/api", apiRouter);
 

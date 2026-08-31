@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { z } from "zod";
 import { createCatalogService } from "../services/catalog-service.js";
+import { createAuthRouter } from "./auth.js";
+import { createSessionMiddleware } from "../middleware/auth.js";
 
 const storeSchema = z.enum(["all", "steam", "epic"]).default("all");
 const periodSchema = z.enum(["now", "week", "all-time"]).default("now");
@@ -19,8 +21,11 @@ const methodology = {
   sources: ["Steam Charts", "Epic Games Store — Mais jogados", "IGDB PopScore"],
 };
 
-export function createApiRouter({ catalogService = createCatalogService(), healthCheck } = {}) {
+export function createApiRouter({ catalogService = createCatalogService(), authService, healthCheck } = {}) {
   const router = Router();
+
+  router.use(createSessionMiddleware({ authService }));
+  if (authService) router.use("/auth", createAuthRouter({ authService }));
 
   router.get("/health", async (_request, response, next) => {
     try {
