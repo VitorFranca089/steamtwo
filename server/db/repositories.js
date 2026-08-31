@@ -2,12 +2,18 @@ import { withTransaction } from "./pool.js";
 
 const gameColumns = `
   g.id, g.slug, g.title, g.summary, g.cover_url AS "coverUrl", g.hero_url AS "heroUrl",
-  g.igdb_id AS "igdbId", g.igdb_popularity AS "igdbPopularity", g.released_at AS "releasedAt",
+  g.igdb_id AS "igdbId", g.igdb_popularity AS "igdbPopularity",
+  g.igdb_rating AS "igdbRating", g.igdb_hype AS "igdbHype", g.released_at AS "releasedAt",
   g.origin, g.submitted_by AS "submittedBy",
   COALESCE(array_agg(DISTINCT ge.name) FILTER (WHERE ge.name IS NOT NULL), '{}') AS genres`;
 
 function mapGame(row) {
-  return { ...row, igdbPopularity: row.igdbPopularity == null ? null : Number(row.igdbPopularity) };
+  return {
+    ...row,
+    igdbPopularity: row.igdbPopularity == null ? null : Number(row.igdbPopularity),
+    igdbRating: row.igdbRating == null ? null : Number(row.igdbRating),
+    igdbHype: row.igdbHype == null ? null : Number(row.igdbHype),
+  };
 }
 
 /** Persistence boundary. All methods use placeholders; external API content is never interpolated into SQL. */
@@ -21,16 +27,17 @@ export function createRepositories(pool) {
         // in that (rare) case ON CONFLICT DO UPDATE runs zero rows and we
         // fall back to reading the existing (admin-owned) row back out.
         const result = await client.query(`
-          INSERT INTO games (slug, title, summary, cover_url, hero_url, igdb_id, igdb_popularity, released_at, origin)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'igdb')
+          INSERT INTO games (slug, title, summary, cover_url, hero_url, igdb_id, igdb_popularity, igdb_rating, igdb_hype, released_at, origin)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'igdb')
           ON CONFLICT (slug) DO UPDATE SET
             title = EXCLUDED.title, summary = EXCLUDED.summary, cover_url = EXCLUDED.cover_url,
             hero_url = EXCLUDED.hero_url, igdb_id = EXCLUDED.igdb_id,
-            igdb_popularity = EXCLUDED.igdb_popularity, released_at = EXCLUDED.released_at, updated_at = now()
+            igdb_popularity = EXCLUDED.igdb_popularity, igdb_rating = EXCLUDED.igdb_rating,
+            igdb_hype = EXCLUDED.igdb_hype, released_at = EXCLUDED.released_at, updated_at = now()
           WHERE games.origin = 'igdb'
           RETURNING id, slug, title`, [
           game.slug, game.title, game.summary ?? null, game.coverUrl ?? null, game.heroUrl ?? null,
-          game.igdbId ?? null, game.igdbPopularity ?? null, game.releasedAt ?? null,
+          game.igdbId ?? null, game.igdbPopularity ?? null, game.igdbRating ?? null, game.igdbHype ?? null, game.releasedAt ?? null,
         ]);
         if (result.rows[0]) return result.rows[0];
         const existing = await client.query(`SELECT id, slug, title FROM games WHERE slug = $1`, [game.slug]);

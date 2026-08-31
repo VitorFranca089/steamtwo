@@ -32,6 +32,8 @@ export function normalizeIgdbGame(game) {
     genres: (game.genres ?? []).map((genre) => ({ externalId: String(genre.id), name: cleanText(genre.name) })).filter((genre) => genre.name),
     releaseDate: game.first_release_date ? new Date(game.first_release_date * 1000).toISOString() : null,
     popularity: Number(game.popularity ?? game.popularity_primitives?.popularity ?? 0) || 0,
+    rating: game.total_rating != null ? Number(game.total_rating) : null,
+    hype: game.hypes != null ? Number(game.hypes) : null,
     stores: [
       steamId && { store: "steam", externalId: String(steamId) },
       epicId && { store: "epic", externalId: String(epicId) },

@@ -13,7 +13,7 @@ const DEFAULT_POPULARITY_TYPE = 2;
 // o topo do catálogo real fique perto de 100, mesma ordem de grandeza do
 // antigo campo `popularity` (0-100) que este código substituiu.
 const POPULARITY_SCALE = 50_000;
-const CATALOG_FIELDS = "id,name,slug,summary,storyline,first_release_date,cover.image_id,screenshots.image_id,genres.id,genres.name,external_games.category,external_games.uid";
+const CATALOG_FIELDS = "id,name,slug,summary,storyline,first_release_date,cover.image_id,screenshots.image_id,genres.id,genres.name,external_games.category,external_games.uid,total_rating,hypes";
 
 export function createIgdbClient({ clientId, clientSecret, fetchImpl, now = () => Date.now() } = {}) {
   let token = null;

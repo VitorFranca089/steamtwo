@@ -14,6 +14,8 @@ function mapGame(row) {
     trend: Number(row.trend ?? 0),
     currentPlayers: row.currentPlayers == null ? null : Number(row.currentPlayers),
     historicalPopularity: Number(row.historicalPopularity ?? 0),
+    qualityScore: row.qualityScore == null ? null : Number(row.qualityScore),
+    hypeCount: row.hypeCount == null ? null : Number(row.hypeCount),
   };
 }
 
@@ -31,6 +33,8 @@ export function createCatalogReadRepository(pool) {
           g.released_at AS "releaseDate",
           g.origin,
           g.igdb_popularity AS "historicalPopularity",
+          g.igdb_rating AS "qualityScore",
+          g.igdb_hype AS "hypeCount",
           current_ranking.score,
           current_ranking.trend,
           steam_metric.concurrent_players AS "currentPlayers",

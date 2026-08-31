@@ -25,6 +25,8 @@ function toGameInput(game, source) {
     heroUrl: game.heroUrl || null,
     igdbId,
     igdbPopularity: Number.isFinite(game.popularity) ? game.popularity : null,
+    igdbRating: Number.isFinite(game.rating) ? game.rating : null,
+    igdbHype: Number.isFinite(game.hype) ? game.hype : null,
     releasedAt: game.releaseDate || null,
   };
 }

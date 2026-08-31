@@ -16,6 +16,10 @@ cabeçalho funcionando em qualquer página.
   que o índice já era, na prática, só-IGDB; o que foi desativado (não
   removido) para tornar isso explícito; e o bug de UX que fazia a busca do
   cabeçalho não funcionar fora da página de catálogo.
+- [`02-notas-avaliacao-reais.md`](./02-notas-avaliacao-reais.md) — os três
+  números de "avaliação" no destaque da home eram literais fixos (96/93/95),
+  iguais para qualquer jogo; substituídos por dados reais do IGDB
+  (popularidade, nota de avaliação e hype), com duas colunas novas no banco.
 
 ## Resumo rápido
 
