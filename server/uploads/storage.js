@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 import multer from "multer";
 
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -35,18 +36,45 @@ function createUploader(dir) {
   });
 }
 
+// Games don't have a single owning user (unlike avatar/cover), so each file
+// gets its own random name instead of being keyed by `request.user.id`.
+function createGameImageUploader(dir) {
+  const storage = multer.diskStorage({
+    destination(_request, _file, callback) {
+      callback(null, dir);
+    },
+    filename(_request, file, callback) {
+      const ext = ALLOWED_MIME_EXT[file.mimetype];
+      callback(null, `${crypto.randomUUID()}.${ext}`);
+    },
+  });
+
+  return multer({
+    storage,
+    limits: { fileSize: MAX_UPLOAD_BYTES },
+    fileFilter(_request, file, callback) {
+      if (!ALLOWED_MIME_EXT[file.mimetype]) return callback(unsupportedMimeError());
+      callback(null, true);
+    },
+  });
+}
+
 export function createUploadStorage({ rootDir }) {
   const avatarsDir = path.join(rootDir, "avatars");
   const coversDir = path.join(rootDir, "covers");
+  const gamesDir = path.join(rootDir, "games");
 
   return {
     avatarsDir,
     coversDir,
+    gamesDir,
     avatarUpload: createUploader(avatarsDir),
     coverUpload: createUploader(coversDir),
+    gameImageUpload: createGameImageUploader(gamesDir),
     ensureDirs() {
       fs.mkdirSync(avatarsDir, { recursive: true });
       fs.mkdirSync(coversDir, { recursive: true });
+      fs.mkdirSync(gamesDir, { recursive: true });
     },
   };
 }

@@ -3,6 +3,7 @@ import { withTransaction } from "./pool.js";
 const gameColumns = `
   g.id, g.slug, g.title, g.summary, g.cover_url AS "coverUrl", g.hero_url AS "heroUrl",
   g.igdb_id AS "igdbId", g.igdb_popularity AS "igdbPopularity", g.released_at AS "releasedAt",
+  g.origin, g.submitted_by AS "submittedBy",
   COALESCE(array_agg(DISTINCT ge.name) FILTER (WHERE ge.name IS NOT NULL), '{}') AS genres`;
 
 function mapGame(row) {
@@ -14,18 +15,63 @@ export function createRepositories(pool) {
   return {
     games: {
       async upsert(game, client = pool) {
+        // The sync job only ever writes `origin = 'igdb'` rows. The `WHERE
+        // games.origin = 'igdb'` guard means a slug collision with a game an
+        // admin submitted by hand is skipped instead of silently overwritten;
+        // in that (rare) case ON CONFLICT DO UPDATE runs zero rows and we
+        // fall back to reading the existing (admin-owned) row back out.
         const result = await client.query(`
-          INSERT INTO games (slug, title, summary, cover_url, hero_url, igdb_id, igdb_popularity, released_at)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          INSERT INTO games (slug, title, summary, cover_url, hero_url, igdb_id, igdb_popularity, released_at, origin)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'igdb')
           ON CONFLICT (slug) DO UPDATE SET
             title = EXCLUDED.title, summary = EXCLUDED.summary, cover_url = EXCLUDED.cover_url,
             hero_url = EXCLUDED.hero_url, igdb_id = EXCLUDED.igdb_id,
             igdb_popularity = EXCLUDED.igdb_popularity, released_at = EXCLUDED.released_at, updated_at = now()
+          WHERE games.origin = 'igdb'
           RETURNING id, slug, title`, [
           game.slug, game.title, game.summary ?? null, game.coverUrl ?? null, game.heroUrl ?? null,
           game.igdbId ?? null, game.igdbPopularity ?? null, game.releasedAt ?? null,
         ]);
-        return result.rows[0];
+        if (result.rows[0]) return result.rows[0];
+        const existing = await client.query(`SELECT id, slug, title FROM games WHERE slug = $1`, [game.slug]);
+        return existing.rows[0];
+      },
+      async createIndependent({ slug, title, summary, coverUrl, heroUrl, releasedAt, genres = [], submittedBy }) {
+        return withTransaction(pool, async (client) => {
+          // Unique-violation (23505) on `slug` is left for the service layer
+          // to translate, same convention as auth-service's duplicate
+          // username/e-mail handling.
+          const inserted = await client.query(`
+            INSERT INTO games (slug, title, summary, cover_url, hero_url, released_at, origin, submitted_by)
+            VALUES ($1, $2, $3, $4, $5, $6, 'admin', $7)
+            RETURNING id, slug, title`, [
+            slug, title, summary ?? null, coverUrl ?? null, heroUrl ?? null, releasedAt ?? null, submittedBy ?? null,
+          ]);
+          const gameId = inserted.rows[0].id;
+          for (const genre of genres) {
+            const genreRow = await client.query(`
+              INSERT INTO genres (slug, name) VALUES ($1, $2)
+              ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+              RETURNING id`, [genre.slug, genre.name]);
+            await client.query("INSERT INTO game_genres (game_id, genre_id) VALUES ($1, $2)", [gameId, genreRow.rows[0].id]);
+          }
+          const full = await client.query(`SELECT ${gameColumns}
+            FROM games g LEFT JOIN game_genres gg ON gg.game_id = g.id LEFT JOIN genres ge ON ge.id = gg.genre_id
+            WHERE g.id = $1 GROUP BY g.id`, [gameId]);
+          return mapGame(full.rows[0]);
+        });
+      },
+      async listByOrigin(origin) {
+        const result = await pool.query(`SELECT ${gameColumns}
+          FROM games g LEFT JOIN game_genres gg ON gg.game_id = g.id LEFT JOIN genres ge ON ge.id = gg.genre_id
+          WHERE g.origin = $1 GROUP BY g.id ORDER BY g.created_at DESC`, [origin]);
+        return result.rows.map(mapGame);
+      },
+      async deleteById(id, { origin } = {}) {
+        const result = origin
+          ? await pool.query("DELETE FROM games WHERE id = $1 AND origin = $2 RETURNING id", [id, origin])
+          : await pool.query("DELETE FROM games WHERE id = $1 RETURNING id", [id]);
+        return result.rows[0] ?? null;
       },
       async replaceGenres(gameId, genres, client = pool) {
         await client.query("DELETE FROM game_genres WHERE game_id = $1", [gameId]);

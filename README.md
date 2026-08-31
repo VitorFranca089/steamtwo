@@ -1,14 +1,15 @@
 # SteamTwo
 
-Catálogo de jogos com dashboard de popularidade da Steam e Epic Games, interface em React/HTML/CSS/JS, API Node.js/Express e persistência PostgreSQL.
+Catálogo de jogos com dashboard de popularidade movido a dados do IGDB, interface em React/HTML/CSS/JS, API Node.js/Express e persistência PostgreSQL.
 
 ## Funcionalidades
 
 - dashboard com mais jogados agora, média da última semana, popularidade histórica e recorde monitorado;
-- catálogo pesquisável e filtrável por loja e gênero;
-- ranking combinado transparente;
-- página de detalhes com link para a loja oficial;
-- coleta da Steam, Epic Games e IGDB com snapshots imutáveis;
+- catálogo pesquisável e filtrável por loja, gênero e jogos independentes; busca funciona a partir de qualquer página;
+- ranking transparente baseado inteiramente na popularidade do IGDB;
+- página de detalhes com link para a loja oficial (Steam/Epic, quando o IGDB identifica o jogo lá);
+- catálogo sincronizado do IGDB (título, capa, gêneros, popularidade) com histórico de execuções (`sync_runs`);
+- admins podem enviar jogos independentes direto para o catálogo, sem depender do IGDB (`/admin/jogos`);
 - fallback visual com dados realistas quando o PostgreSQL ainda não foi configurado;
 - cadastro e login de usuários (username/e-mail únicos, senha forte, sessão via cookie);
 - regularização de conta com nome completo, data de nascimento e CPF (verificação de idade);
@@ -19,16 +20,14 @@ Catálogo de jogos com dashboard de popularidade da Steam e Epic Games, interfac
 - recuperação de senha por token enviado por e-mail (`/esqueci-senha`, `/redefinir-senha`),
   com um mail sender reutilizável (via Mailtrap/SMTP) para futuras notificações.
 
-## Como os rankings funcionam
+## Como o índice funciona
 
-Cada posição de uma fonte é normalizada por `100 × (N - posição + 1) / N`. O índice combinado é a média das fontes disponíveis. Ausência em uma coleta válida vale zero; se a fonte inteira estiver indisponível, ela é excluída do cálculo.
+O Índice SteamTwo vem inteiramente da popularidade normalizada que o IGDB calcula para cada jogo — mesma fonte do catálogo, capas e gêneros. Steam e Epic Games não alimentam mais a pontuação; eles continuam aparecendo como link de "Abrir na loja" quando o IGDB identifica o jogo nessas lojas (via `external_games`), mas isso é só um link, não um sinal de ranking. Veja [`docs/claude/feat-3`](./docs/claude/feat-3/README.md) para o histórico dessa decisão.
 
-- **Agora:** último snapshot válido da Steam e Epic.
-- **Última semana:** média de sete snapshots diários válidos.
-- **De sempre:** proxy de popularidade histórica da IGDB; não representa horas jogadas.
+- **Agora / Última semana:** popularidade IGDB (não há mais coleta própria de snapshot diário).
+- **De sempre:** popularidade histórica do IGDB; não representa horas jogadas.
 - **Recorde monitorado:** maior índice registrado desde o início da coleta.
-
-A Steam disponibiliza posição e jogadores simultâneos. A coleção oficial da Epic é tentada primeiro; quando bloqueia coleta automatizada com `403/429`, o job usa o ranking público do egdata e identifica explicitamente o provedor como `egdata-fallback`. A Epic não fornece contagem pública de jogadores nesse ranking.
+- Jogos independentes enviados por um admin (sem dado do IGDB) começam com pontuação zero.
 
 ## Execução local
 
@@ -48,8 +47,11 @@ npm run dev
 acesso irrestrito à plataforma. Por padrão: username `admin`, e-mail
 `admin@steamtwo.dev`, senha `Admin@12345` — sobrescreva com `ADMIN_USERNAME`,
 `ADMIN_EMAIL` e `ADMIN_PASSWORD` no `.env`. Veja mais em
-[`docs/claude/feat-1`](./docs/claude/feat-1/README.md) (cadastro/login) e
-[`docs/claude/feat-2`](./docs/claude/feat-2/README.md) (perfil de usuário e conta).
+[`docs/claude/feat-1`](./docs/claude/feat-1/README.md) (cadastro/login),
+[`docs/claude/feat-2`](./docs/claude/feat-2/README.md) (perfil de usuário e conta),
+[`docs/claude/feat-3`](./docs/claude/feat-3/README.md) (integração com o IGDB, índice
+só-IGDB e busca) e [`docs/claude/feat-4`](./docs/claude/feat-4/README.md) (admin
+enviando jogos independentes).
 
 Para os e-mails (verificação de conta e "esqueci minha senha") funcionarem de
 verdade, preencha `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` no `.env` com as
@@ -60,13 +62,19 @@ aplicação roda normalmente, só não envia e-mails. Veja
 Frontend: `http://127.0.0.1:5173/`  
 API: `http://127.0.0.1:3001/api/health`
 
-Para enriquecer o catálogo com a IGDB, preencha `TWITCH_CLIENT_ID` e `TWITCH_CLIENT_SECRET` no `.env` e execute:
+O catálogo e o índice do site dependem do IGDB: preencha `TWITCH_CLIENT_ID` e
+`TWITCH_CLIENT_SECRET` no `.env` (credenciais de um app na
+[Twitch Developer Console](https://dev.twitch.tv/console/apps), que é como o
+IGDB autentica) e execute:
 
 ```bash
 npm run sync:catalog
-npm run sync:rankings
 npm run sync:popularity
 ```
+
+`npm run sync:rankings` (coleta de Steam Charts/Epic) ainda existe no
+repositório, mas não é mais necessário — o índice não depende mais dele. Veja
+[`docs/claude/feat-3`](./docs/claude/feat-3/README.md).
 
 ## Verificação
 

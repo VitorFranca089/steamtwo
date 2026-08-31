@@ -51,7 +51,7 @@ export function createCatalogService({ repository } = {}) {
           achievedAt: "2026-08-24T12:00:00.000Z",
         })),
         updatedAt: mockUpdatedAt,
-        sourceStatus: { steam: "fresh", epic: "fresh", igdb: "fresh" },
+        sourceStatus: { igdb: "fresh" },
         isFallback: !repository,
       };
     },
@@ -69,16 +69,17 @@ export function createCatalogService({ repository } = {}) {
         period,
         store,
         updatedAt: mockUpdatedAt,
-        sourceStatus: { steam: "fresh", epic: "fresh", igdb: "fresh" },
+        sourceStatus: { igdb: "fresh" },
       };
     },
 
-    async games({ q = "", genre, store = "all", sort = "popularity", page = 1, limit = 12 } = {}) {
+    async games({ q = "", genre, store = "all", sort = "popularity", page = 1, limit = 12, independent = false } = {}) {
       const normalizedQuery = q.trim().toLocaleLowerCase("pt-BR");
       let games = (await source.listGames()).filter((game) => {
         const matchesQuery = !normalizedQuery || game.title.toLocaleLowerCase("pt-BR").includes(normalizedQuery);
         const matchesGenre = !genre || game.genres.some((item) => item.toLocaleLowerCase("pt-BR") === genre.toLocaleLowerCase("pt-BR"));
-        return matchesQuery && matchesGenre && storeMatches(game, store);
+        const matchesOrigin = !independent || game.origin === "admin";
+        return matchesQuery && matchesGenre && matchesOrigin && storeMatches(game, store);
       });
       games = [...games].sort((a, b) =>
         sort === "name" ? a.title.localeCompare(b.title, "pt-BR") : b.score - a.score,

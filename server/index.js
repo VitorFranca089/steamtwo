@@ -7,10 +7,12 @@ import { createPool } from "./db/pool.js";
 import { createCatalogReadRepository } from "./db/catalog-read-repository.js";
 import { createUsersRepository } from "./db/users-repository.js";
 import { createProfileRepository } from "./db/profile-repository.js";
+import { createRepositories } from "./db/repositories.js";
 import { createApiRouter } from "./routes/index.js";
 import { createCatalogService } from "./services/catalog-service.js";
 import { createAuthService } from "./services/auth-service.js";
 import { createProfileService } from "./services/profile-service.js";
+import { createAdminCatalogService } from "./services/admin-catalog-service.js";
 import { createUploadStorage } from "./uploads/storage.js";
 import { createMailer } from "./integrations/mailer.js";
 
@@ -21,6 +23,7 @@ let pool = null;
 let catalogRepository = null;
 let authService = null;
 let profileService = null;
+let adminCatalogService = null;
 let uploadStorage = null;
 
 if (config.databaseUrl) {
@@ -29,6 +32,7 @@ if (config.databaseUrl) {
   const mailer = createMailer(config.smtp);
   authService = createAuthService({ repository: createUsersRepository(pool), mailer, appBaseUrl: config.appBaseUrl });
   profileService = createProfileService({ repository: createProfileRepository(pool) });
+  adminCatalogService = createAdminCatalogService({ repository: createRepositories(pool) });
   uploadStorage = createUploadStorage({ rootDir: uploadsRootDir });
   uploadStorage.ensureDirs();
 }
@@ -46,8 +50,10 @@ const app = createApp({
     catalogService,
     authService,
     profileService,
+    adminCatalogService,
     avatarUpload: uploadStorage?.avatarUpload,
     coverUpload: uploadStorage?.coverUpload,
+    gameImageUpload: uploadStorage?.gameImageUpload,
     avatarsDir: uploadStorage?.avatarsDir,
     coversDir: uploadStorage?.coversDir,
     healthCheck,
