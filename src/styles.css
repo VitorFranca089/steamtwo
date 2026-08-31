@@ -74,3 +74,59 @@ footer { display: flex; align-items: center; gap: 20px; max-width: 1440px; margi
 .auth-page { min-height: calc(100vh - 88px); display: grid; place-items: center; padding: 60px 20px; }.auth-card { width: min(420px, 100%); padding: 34px 32px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }.auth-card h1 { margin: 8px 0 6px; font-family: var(--display); font-size: 30px; }.auth-subtitle { margin: 0 0 22px; color: var(--muted); font-size: 13px; line-height: 1.5; }.auth-field { display: flex; align-items: center; gap: 10px; height: 46px; margin-bottom: 12px; padding: 0 14px; border: 1px solid #34404c; border-radius: 6px; background: rgba(255,255,255,.04); color: #9aa2ab; }.auth-field input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: white; font-size: 14px; }.auth-field input::placeholder { color: #7c848d; }.password-checklist { display: grid; gap: 4px; margin: 4px 0 18px; padding: 0; list-style: none; font-size: 11px; color: #8b939b; }.password-checklist li { display: flex; align-items: center; gap: 6px; }.password-checklist li.met { color: var(--green); }.auth-error { display: flex; align-items: center; gap: 7px; margin: -4px 0 14px; color: var(--red); font-size: 12px; }.auth-switch { margin: 16px 0 0; color: var(--muted); font-size: 12px; text-align: center; }.auth-switch button { border: 0; background: none; color: var(--blue-2); font-size: 12px; }.auth-card .primary-button { width: 100%; min-width: 0; }
 @media (max-width: 720px) { .account-box { grid-column: 1 / -1; grid-row: 3; margin: 4px 0 0; } }
 @media (max-width: 390px) { .search-box { width: 155px; }.hero h1 { font-size: 42px; }.hero { min-height: 650px; }.top-item { min-width: 225px; }.store-filter button { padding-inline: 10px; }.week-row { grid-template-columns: 17px 63px minmax(0,1fr) 35px; }.week-row .trend { display: none; }.catalog-grid { gap: 8px; } }
+.profile-page { max-width: 900px; min-height: calc(100vh - 88px); margin: 0 auto; padding: 48px 40px 90px; }
+.profile-header { height: 220px; margin-bottom: 56px; border-radius: 8px; position: relative; background: var(--profile-cover, none) center / cover no-repeat, var(--panel-2); }
+.profile-header-static { margin-bottom: 40px; }
+.profile-cover-input { display: flex; align-items: center; gap: 8px; position: absolute; top: 14px; right: 14px; border: 0; border-radius: 6px; padding: 8px 12px; color: white; background: rgba(0,0,0,.55); font-size: 12px; }
+.profile-avatar-wrap { width: 128px; height: 128px; position: absolute; left: 28px; bottom: -40px; border-radius: 50%; overflow: hidden; border: 4px solid var(--bg); background: var(--panel-2); }
+.profile-avatar { display: block; width: 100%; height: 100%; object-fit: cover; }
+.profile-avatar-input { display: grid; place-items: center; width: 34px; height: 34px; position: absolute; right: 2px; bottom: 2px; border: 2px solid var(--bg); border-radius: 50%; color: white; background: var(--blue); }
+.profile-username { margin: 0 0 34px; font-family: var(--display); font-size: 36px; letter-spacing: .4px; }
+.profile-banner { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 28px; padding: 14px 18px; border: 1px solid rgba(8,119,255,.35); border-radius: 6px; background: rgba(8,119,255,.08); color: #cfe1ff; font-size: 13px; }
+.profile-banner button { border: 0; border-radius: 6px; padding: 8px 14px; color: white; background: var(--blue); font-size: 12px; white-space: nowrap; }
+.profile-section { margin-bottom: 44px; }
+.profile-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.profile-section-head h2 { margin: 0; font-family: var(--display); font-size: 22px; letter-spacing: .4px; }
+.profile-section .list-button { display: inline-flex; align-items: center; gap: 8px; height: 38px; border: 1px solid #34404c; border-radius: 6px; padding: 0 14px; color: #cdd3d9; background: none; font-size: 12px; }
+.profile-empty { margin: 0; color: var(--muted); font-size: 13px; }
+.profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px; }
+.profile-poster { position: relative; }
+.poster-title { display: block; margin-top: 6px; color: #d3d6db; font-size: 11px; line-height: 1.3; }
+.poster-remove { display: grid; place-items: center; width: 26px; height: 26px; position: absolute; top: 6px; right: 6px; border: 0; border-radius: 50%; color: white; background: rgba(0,0,0,.6); }
+.game-picker { margin-bottom: 14px; }
+.game-picker-input { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 14px; border: 1px solid #34404c; border-radius: 6px; background: rgba(255,255,255,.04); color: #9aa2ab; }
+.game-picker-input input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: white; font-size: 13px; }
+.game-picker-results { display: grid; gap: 4px; margin-top: 6px; max-height: 260px; overflow-y: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.game-picker-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 0; background: none; color: #d3d6db; text-align: left; font-size: 12px; }
+.game-picker-item:hover { background: rgba(255,255,255,.05); }
+.game-picker-item img { width: 32px; height: 44px; border-radius: 3px; object-fit: cover; }
+.game-picker-empty { margin: 0; padding: 12px; color: var(--muted); font-size: 12px; }
+.achievement-form { display: grid; gap: 10px; margin-bottom: 20px; padding: 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.achievement-form-game { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid #34404c; border-radius: 6px; color: #d3d6db; font-size: 12px; }
+.achievement-form-game img { width: 32px; height: 44px; border-radius: 3px; object-fit: cover; }
+.achievement-form-game button { margin-left: auto; border: 0; color: var(--muted); background: none; }
+.achievement-name-input { height: 42px; padding: 0 14px; border: 1px solid #34404c; border-radius: 6px; background: rgba(255,255,255,.04); color: white; font-size: 13px; }
+.achievement-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.achievement-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: #d3d6db; }
+.achievement-row > svg { color: #f2b23c; flex-shrink: 0; }
+.achievement-row img { width: 30px; height: 40px; border-radius: 3px; object-fit: cover; }
+.achievement-info { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.achievement-info b { font-size: 13px; }
+.achievement-info small { color: var(--muted); font-size: 11px; }
+.achievement-row > button:last-child { border: 0; color: var(--muted); background: none; }
+.achievement-row > button:last-child:hover { color: var(--red); }
+.profile-cover-input:disabled, .profile-avatar-input:disabled { opacity: .6; cursor: not-allowed; }
+.profile-avatar-loading { display: grid; place-items: center; position: absolute; inset: 0; border-radius: 50%; background: rgba(8,12,17,.55); }
+.profile-avatar-loading::after { content: ''; width: 28px; height: 28px; border: 3px solid rgba(255,255,255,.25); border-top-color: white; border-radius: 50%; animation: avatar-spin .8s linear infinite; }
+@keyframes avatar-spin { to { transform: rotate(360deg); } }
+.toast-stack { display: grid; gap: 10px; width: min(360px, calc(100vw - 40px)); position: fixed; right: 24px; bottom: 24px; z-index: 30; }
+.toast { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 7px; background: #101821; color: white; font-size: 13px; box-shadow: 0 12px 30px rgba(0,0,0,.35); animation: toast-in .18s ease-out; }
+.toast span { flex: 1; line-height: 1.4; }
+.toast > button { border: 0; padding: 2px; color: #8f98a3; background: none; flex-shrink: 0; }
+.toast > button:hover { color: white; }
+.toast-success { border-color: rgba(75,220,109,.4); }
+.toast-success > svg { color: var(--green); flex-shrink: 0; }
+.toast-error { border-color: rgba(255,90,93,.4); }
+.toast-error > svg { color: var(--red); flex-shrink: 0; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (max-width: 720px) { .profile-page { padding: 34px 20px 60px; }.profile-header { height: 180px; }.profile-avatar-wrap { width: 96px; height: 96px; left: 18px; bottom: -30px; }.toast-stack { right: 12px; bottom: 12px; left: 12px; width: auto; } }

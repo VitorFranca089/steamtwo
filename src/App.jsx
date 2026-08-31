@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, ArrowSquareOut, BookmarkSimple, CaretDown, ChartLineUp, Check, Circle, FunnelSimple, GameController, Info, MagnifyingGlass, Star, TrendUp, UserCircle, UsersThree, X } from "@phosphor-icons/react";
 import { LoginPage, ProfilePage, SignupPage } from "./AuthPages.jsx";
+import { MyProfilePage, PublicProfilePage } from "./ProfilePages.jsx";
 import { fetchCurrentUser, logout as logoutRequest } from "./auth-api.js";
 
 const games = {
@@ -63,7 +64,7 @@ const normalizeDashboard = (payload = {}, current = fallback) => ({
   records: Array.isArray(payload.records) && payload.records.length ? payload.records.map(normalizeRecord) : current.records,
 });
 const storeUrlForGame = (game) => game.storeLinks?.[game.stores?.[0]] || (game.stores?.[0] === "epic" ? `https://store.epicgames.com/en-US/browse?q=${encodeURIComponent(game.title)}` : `https://store.steampowered.com/search/?term=${encodeURIComponent(game.title)}`);
-function SafeImage({ src, alt, className = "", ...props }) { const [url, setUrl] = useState(src); return <img className={className} src={url} alt={alt} loading="lazy" onError={() => setUrl("https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80")} {...props} />; }
+export function SafeImage({ src, alt, className = "", ...props }) { const [url, setUrl] = useState(src); useEffect(() => setUrl(src), [src]); return <img className={className} src={url} alt={alt} loading="lazy" onError={() => setUrl("https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80")} {...props} />; }
 function Trend({ value, compact = false }) { if (!value) return <span className="trend neutral">—</span>; const positive = value > 0; return <span className={`trend ${positive ? "positive" : "negative"}`}>{positive ? <ArrowUpRight size={compact ? 15 : 16} weight="bold" /> : <ArrowDownRight size={compact ? 15 : 16} weight="bold" />} {Math.abs(value)}</span>; }
 function AccountBox({ user, onNavigate, onLogout }) {
   if (!user) {
@@ -71,7 +72,8 @@ function AccountBox({ user, onNavigate, onLogout }) {
   }
   return <div className="account-box">
     <span className="account-name"><UserCircle size={20} />{user.username}{user.role === "admin" && <b className="admin-badge">ADMIN</b>}</span>
-    {user.role !== "admin" && !user.isVerified && <button className="account-link" onClick={() => onNavigate("perfil")}>Completar perfil</button>}
+    <button className="account-link" onClick={() => onNavigate("perfil")}>Meu perfil</button>
+    {user.role !== "admin" && !user.isVerified && <button className="account-link" onClick={() => onNavigate("verify")}>Completar perfil</button>}
     <button className="account-link" onClick={onLogout}>Sair</button>
   </div>;
 }
@@ -134,6 +136,7 @@ export function App() {
   const [selected, setSelected] = useState(null);
   const [methodology, setMethodology] = useState(false);
   const [user, setUser] = useState(null);
+  const [publicProfileUsername, setPublicProfileUsername] = useState(null);
 
   useEffect(() => { fetchCurrentUser().then(setUser).catch(() => setUser(null)); }, []);
 
@@ -153,7 +156,14 @@ export function App() {
       else if (path.startsWith("/rankings")) { setSelected(null); setView("rankings"); }
       else if (path.startsWith("/entrar")) { setSelected(null); setView("login"); }
       else if (path.startsWith("/cadastro")) { setSelected(null); setView("signup"); }
-      else if (path.startsWith("/perfil")) { setSelected(null); setView("perfil"); }
+      else if (path.startsWith("/perfil/verificar")) { setSelected(null); setPublicProfileUsername(null); setView("verify"); }
+      else if (path === "/perfil" || path === "/perfil/") { setSelected(null); setPublicProfileUsername(null); setView("perfil"); }
+      else if (path.startsWith("/perfil/")) {
+        const username = decodeURIComponent(path.slice("/perfil/".length).split("/")[0]);
+        setSelected(null);
+        setPublicProfileUsername(username);
+        setView("publicProfile");
+      }
       else if (path.startsWith("/jogos/")) {
         const slug = decodeURIComponent(path.slice("/jogos/".length));
         const base = fallbackForSlug(slug) || normalizeGame({ slug, title: slug.replace(/-/g, " ") });
@@ -177,9 +187,10 @@ export function App() {
     return () => controller.abort();
   }, []);
 
-  const viewPaths = { home: "/", catalog: "/catalogo", rankings: "/rankings", login: "/entrar", signup: "/cadastro", perfil: "/perfil" };
+  const viewPaths = { home: "/", catalog: "/catalogo", rankings: "/rankings", login: "/entrar", signup: "/cadastro", perfil: "/perfil", verify: "/perfil/verificar" };
   const navigate = (next) => {
     setSelected(null);
+    setPublicProfileUsername(null);
     setView(next);
     window.history.pushState({}, "", viewPaths[next] ?? "/");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -194,5 +205,5 @@ export function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
     loadDetail(normalized.slug, normalized);
   };
-  return <div className="app-shell"><Header view={selected ? "" : view} onNavigate={navigate} search={search} setSearch={setSearch} user={user} onLogout={handleLogout} />{loading && <div className="loading-bar" aria-label="Carregando dados" />}<main>{selected ? <Detail game={selected} onBack={() => navigate("home")} onMethodology={() => setMethodology(true)} /> : view === "login" ? <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} /> : view === "signup" ? <SignupPage onSignedUp={() => navigate("login")} onNavigate={navigate} /> : view === "perfil" ? (user ? <ProfilePage onCompleted={() => navigate("home")} /> : <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} />) : view === "catalog" ? <Catalog data={data} query={search} onDetails={details} /> : view === "rankings" ? <Rankings data={data} onDetails={details} /> : <Home data={data} onDetails={details} onMethodology={() => setMethodology(true)} />}</main><footer><span>SteamTwo</span><span>Dados públicos, rankings transparentes.</span><button onClick={() => setMethodology(true)}>Metodologia</button>{stale && <small>Últimos dados válidos · {formatDate(data.updatedAt)}</small>}</footer>{methodology && <Methodology onClose={() => setMethodology(false)} />}</div>;
+  return <div className="app-shell"><Header view={selected ? "" : view} onNavigate={navigate} search={search} setSearch={setSearch} user={user} onLogout={handleLogout} />{loading && <div className="loading-bar" aria-label="Carregando dados" />}<main>{selected ? <Detail game={selected} onBack={() => navigate("home")} onMethodology={() => setMethodology(true)} /> : view === "login" ? <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} /> : view === "signup" ? <SignupPage onSignedUp={() => navigate("login")} onNavigate={navigate} /> : view === "verify" ? (user ? <ProfilePage onCompleted={() => navigate("perfil")} /> : <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} />) : view === "perfil" ? (user ? <MyProfilePage user={user} onVerify={() => navigate("verify")} /> : <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} />) : view === "publicProfile" ? <PublicProfilePage username={publicProfileUsername} onBack={() => navigate("home")} /> : view === "catalog" ? <Catalog data={data} query={search} onDetails={details} /> : view === "rankings" ? <Rankings data={data} onDetails={details} /> : <Home data={data} onDetails={details} onMethodology={() => setMethodology(true)} />}</main><footer><span>SteamTwo</span><span>Dados públicos, rankings transparentes.</span><button onClick={() => setMethodology(true)}>Metodologia</button>{stale && <small>Últimos dados válidos · {formatDate(data.updatedAt)}</small>}</footer>{methodology && <Methodology onClose={() => setMethodology(false)} />}</div>;
 }

@@ -11,7 +11,9 @@ Catálogo de jogos com dashboard de popularidade da Steam e Epic Games, interfac
 - coleta da Steam, Epic Games e IGDB com snapshots imutáveis;
 - fallback visual com dados realistas quando o PostgreSQL ainda não foi configurado;
 - cadastro e login de usuários (username/e-mail únicos, senha forte, sessão via cookie);
-- regularização de conta com nome completo, data de nascimento e CPF (verificação de idade).
+- regularização de conta com nome completo, data de nascimento e CPF (verificação de idade);
+- perfil de usuário com foto e capa (upload real), favoritos, wishlist e conquistas
+  criadas pelo próprio usuário, além de uma versão pública somente leitura (`/perfil/:username`).
 
 ## Como os rankings funcionam
 
@@ -42,7 +44,8 @@ npm run dev
 acesso irrestrito à plataforma. Por padrão: username `admin`, e-mail
 `admin@steamtwo.dev`, senha `Admin@12345` — sobrescreva com `ADMIN_USERNAME`,
 `ADMIN_EMAIL` e `ADMIN_PASSWORD` no `.env`. Veja mais em
-[`docs/claude/feat-1`](./docs/claude/feat-1/README.md).
+[`docs/claude/feat-1`](./docs/claude/feat-1/README.md) (cadastro/login) e
+[`docs/claude/feat-2`](./docs/claude/feat-2/README.md) (perfil de usuário).
 
 Frontend: `http://127.0.0.1:5173/`  
 API: `http://127.0.0.1:3001/api/health`

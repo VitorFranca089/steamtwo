@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { createCatalogService } from "../services/catalog-service.js";
 import { createAuthRouter } from "./auth.js";
+import { createProfileRouter } from "./profile.js";
 import { createSessionMiddleware } from "../middleware/auth.js";
 
 const storeSchema = z.enum(["all", "steam", "epic"]).default("all");
@@ -21,11 +22,23 @@ const methodology = {
   sources: ["Steam Charts", "Epic Games Store — Mais jogados", "IGDB PopScore"],
 };
 
-export function createApiRouter({ catalogService = createCatalogService(), authService, healthCheck } = {}) {
+export function createApiRouter({
+  catalogService = createCatalogService(),
+  authService,
+  profileService,
+  avatarUpload,
+  coverUpload,
+  avatarsDir,
+  coversDir,
+  healthCheck,
+} = {}) {
   const router = Router();
 
   router.use(createSessionMiddleware({ authService }));
   if (authService) router.use("/auth", createAuthRouter({ authService }));
+  if (profileService) {
+    router.use("/profile", createProfileRouter({ profileService, avatarUpload, coverUpload, avatarsDir, coversDir }));
+  }
 
   router.get("/health", async (_request, response, next) => {
     try {
