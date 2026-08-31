@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, ArrowSquareOut, BookmarkSimple, CaretDown, ChartLineUp, Check, Circle, FunnelSimple, GameController, Info, MagnifyingGlass, Sparkle, Star, TrendUp, UserCircle, UsersThree, X } from "@phosphor-icons/react";
 import { LoginPage, ProfilePage, SignupPage } from "./AuthPages.jsx";
-import { MyProfilePage, PublicProfilePage } from "./ProfilePages.jsx";
+import { MyProfilePage, PlayersPage, PublicProfilePage } from "./ProfilePages.jsx";
 import { AccountSettingsPage, ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "./AccountPages.jsx";
 import { AdminGamesPage } from "./AdminPages.jsx";
 import { fetchCurrentUser, logout as logoutRequest } from "./auth-api.js";
@@ -87,7 +87,7 @@ function Header({ view, onNavigate, search, setSearch, user, onLogout }) {
     event.preventDefault();
     if (view !== "catalog") onNavigate("catalog");
   };
-  return <header className={`site-header ${view === "home" ? "site-header-overlay" : ""}`}><button className="brand" onClick={() => onNavigate("home")} aria-label="SteamTwo, início"><span>Steam</span><b>Two</b></button><nav aria-label="Navegação principal"><button className={view === "home" ? "active" : ""} onClick={() => onNavigate("home")}>Início</button><button className={view === "catalog" ? "active" : ""} onClick={() => onNavigate("catalog")}>Catálogo</button><button className={view === "rankings" ? "active" : ""} onClick={() => onNavigate("rankings")}>Rankings</button></nav><form className="search-box" role="search" onSubmit={goToCatalog}><MagnifyingGlass size={20} /><input value={search} onChange={(event) => { setSearch(event.target.value); if (event.target.value && view !== "catalog") onNavigate("catalog"); }} placeholder="Buscar jogos" aria-label="Buscar jogos" /></form><AccountBox user={user} onNavigate={onNavigate} onLogout={onLogout} /></header>;
+  return <header className={`site-header ${view === "home" ? "site-header-overlay" : ""}`}><button className="brand" onClick={() => onNavigate("home")} aria-label="SteamTwo, início"><span>Steam</span><b>Two</b></button><nav aria-label="Navegação principal"><button className={view === "home" ? "active" : ""} onClick={() => onNavigate("home")}>Início</button><button className={view === "catalog" ? "active" : ""} onClick={() => onNavigate("catalog")}>Catálogo</button><button className={view === "rankings" ? "active" : ""} onClick={() => onNavigate("rankings")}>Rankings</button><button className={view === "players" ? "active" : ""} onClick={() => onNavigate("players")}>Jogadores</button></nav><form className="search-box" role="search" onSubmit={goToCatalog}><MagnifyingGlass size={20} /><input value={search} onChange={(event) => { setSearch(event.target.value); if (event.target.value && view !== "catalog") onNavigate("catalog"); }} placeholder="Buscar jogos" aria-label="Buscar jogos" /></form><AccountBox user={user} onNavigate={onNavigate} onLogout={onLogout} /></header>;
 }
 function Score({ value, large = false }) { return <span className={large ? "score score-large" : "score"}>{formatScore(value)}</span>; }
 function Hero({ game, onDetails, onMethodology }) {
@@ -179,6 +179,7 @@ export function App() {
       else if (path.startsWith("/verificar-email")) { setSelected(null); setAuthToken(new URLSearchParams(window.location.search).get("token")); setView("verificar-email"); }
       else if (path.startsWith("/conta")) { setSelected(null); setView("conta"); }
       else if (path.startsWith("/admin/jogos")) { setSelected(null); setPublicProfileUsername(null); setView("admin-jogos"); }
+      else if (path.startsWith("/jogadores")) { setSelected(null); setPublicProfileUsername(null); setView("players"); }
       else if (path.startsWith("/perfil/verificar")) { setSelected(null); setPublicProfileUsername(null); setView("verify"); }
       else if (path === "/perfil" || path === "/perfil/") { setSelected(null); setPublicProfileUsername(null); setView("perfil"); }
       else if (path.startsWith("/perfil/")) {
@@ -210,7 +211,7 @@ export function App() {
     return () => controller.abort();
   }, []);
 
-  const viewPaths = { home: "/", catalog: "/catalogo", rankings: "/rankings", login: "/entrar", signup: "/cadastro", perfil: "/perfil", verify: "/perfil/verificar", conta: "/conta", "esqueci-senha": "/esqueci-senha", "admin-jogos": "/admin/jogos" };
+  const viewPaths = { home: "/", catalog: "/catalogo", rankings: "/rankings", login: "/entrar", signup: "/cadastro", perfil: "/perfil", verify: "/perfil/verificar", conta: "/conta", "esqueci-senha": "/esqueci-senha", "admin-jogos": "/admin/jogos", players: "/jogadores" };
   const navigate = (next) => {
     setSelected(null);
     setPublicProfileUsername(null);
@@ -222,6 +223,13 @@ export function App() {
   const handleLogout = () => { logoutRequest().then(() => { setUser(null); navigate("home"); }); };
   const handleForceLogout = () => { setUser(null); navigate("login"); };
   const refreshUserThenNavigate = (next) => () => { fetchCurrentUser().then((nextUser) => { setUser(nextUser); navigate(next); }); };
+  const openProfile = (username) => {
+    setSelected(null);
+    setPublicProfileUsername(username);
+    setView("publicProfile");
+    window.history.pushState({}, "", `/perfil/${encodeURIComponent(username)}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const details = (game) => {
     if (!game) return navigate("rankings");
     const normalized = normalizeGame(game, fallbackForSlug(game.slug) || {});
@@ -230,6 +238,6 @@ export function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
     loadDetail(normalized.slug, normalized);
   };
-  return <div className="app-shell"><Header view={selected ? "" : view} onNavigate={navigate} search={search} setSearch={setSearch} user={user} onLogout={handleLogout} />{loading && <div className="loading-bar" aria-label="Carregando dados" />}<main>{selected ? <Detail game={selected} onBack={() => navigate("home")} onMethodology={() => setMethodology(true)} /> : view === "login" ? <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} /> : view === "signup" ? <SignupPage onSignedUp={() => navigate("login")} onNavigate={navigate} /> : view === "verify" ? (user ? <ProfilePage onCompleted={refreshUserThenNavigate("perfil")} /> : <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} />) : view === "perfil" ? (user ? <MyProfilePage user={user} onVerify={() => navigate("verify")} onSettings={() => navigate("conta")} /> : <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} />) : view === "publicProfile" ? <PublicProfilePage username={publicProfileUsername} onBack={() => navigate("home")} /> : view === "conta" ? (!user ? <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} /> : (user.role !== "admin" && !user.isVerified) ? <ProfilePage onCompleted={refreshUserThenNavigate("conta")} /> : <AccountSettingsPage onLoggedOut={handleForceLogout} />) : view === "admin-jogos" ? (!user ? <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} /> : user.role !== "admin" ? <section className="profile-page"><div className="empty-state"><GameController size={34} /><h2>Acesso restrito a administradores</h2><p>Só administradores podem enviar jogos independentes para o catálogo.</p></div></section> : <AdminGamesPage />)
+  return <div className="app-shell"><Header view={selected ? "" : view} onNavigate={navigate} search={search} setSearch={setSearch} user={user} onLogout={handleLogout} />{loading && <div className="loading-bar" aria-label="Carregando dados" />}<main>{selected ? <Detail game={selected} onBack={() => navigate("home")} onMethodology={() => setMethodology(true)} /> : view === "login" ? <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} /> : view === "signup" ? <SignupPage onSignedUp={() => navigate("login")} onNavigate={navigate} /> : view === "verify" ? (user ? <ProfilePage onCompleted={refreshUserThenNavigate("perfil")} /> : <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} />) : view === "perfil" ? (user ? <MyProfilePage user={user} onVerify={() => navigate("verify")} onSettings={() => navigate("conta")} /> : <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} />) : view === "publicProfile" ? <PublicProfilePage username={publicProfileUsername} onBack={() => navigate("home")} /> : view === "players" ? <PlayersPage onOpenProfile={openProfile} /> : view === "conta" ? (!user ? <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} /> : (user.role !== "admin" && !user.isVerified) ? <ProfilePage onCompleted={refreshUserThenNavigate("conta")} /> : <AccountSettingsPage onLoggedOut={handleForceLogout} />) : view === "admin-jogos" ? (!user ? <LoginPage onLoggedIn={handleAuthed} onNavigate={navigate} /> : user.role !== "admin" ? <section className="profile-page"><div className="empty-state"><GameController size={34} /><h2>Acesso restrito a administradores</h2><p>Só administradores podem enviar jogos independentes para o catálogo.</p></div></section> : <AdminGamesPage />)
 : view === "esqueci-senha" ? <ForgotPasswordPage onNavigate={navigate} /> : view === "redefinir-senha" ? <ResetPasswordPage token={authToken} onNavigate={navigate} /> : view === "verificar-email" ? <VerifyEmailPage token={authToken} onNavigate={navigate} /> : view === "catalog" ? <Catalog data={data} query={search} onDetails={details} /> : view === "rankings" ? <Rankings data={data} onDetails={details} /> : <Home data={data} onDetails={details} onMethodology={() => setMethodology(true)} />}</main><footer><span>SteamTwo</span><span>Dados públicos, rankings transparentes.</span><button onClick={() => setMethodology(true)}>Metodologia</button>{stale && <small>Últimos dados válidos · {formatDate(data.updatedAt)}</small>}</footer>{methodology && <Methodology onClose={() => setMethodology(false)} />}</div>;
 }

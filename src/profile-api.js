@@ -18,6 +18,13 @@ export async function fetchProfileByUsername(username) {
   return parseResponse(await fetch(`/api/profile/${encodeURIComponent(username)}`));
 }
 
+export async function searchUsers(query) {
+  const params = new URLSearchParams();
+  if (query) params.set("q", query);
+  const payload = await parseResponse(await fetch(`/api/profile?${params.toString()}`));
+  return payload.users;
+}
+
 export async function uploadAvatar(file) {
   const formData = new FormData();
   formData.append("avatar", file);

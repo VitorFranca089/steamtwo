@@ -5,6 +5,15 @@ import { removeStaleFiles } from "../uploads/storage.js";
 export function createProfileRouter({ profileService, avatarUpload, coverUpload, avatarsDir, coversDir }) {
   const router = Router();
 
+  router.get("/", async (request, response, next) => {
+    try {
+      const users = await profileService.searchUsers(request.query.q, { excludeUsername: request.user?.username });
+      response.json({ users });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get("/me", requireAuth, async (request, response, next) => {
     try {
       response.json(await profileService.getMyProfile(request.user));

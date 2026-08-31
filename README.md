@@ -15,6 +15,8 @@ Catálogo de jogos com dashboard de popularidade movido a dados do IGDB, interfa
 - regularização de conta com nome completo, data de nascimento e CPF (verificação de idade);
 - perfil de usuário com foto e capa (upload real), favoritos, wishlist e conquistas
   criadas pelo próprio usuário, além de uma versão pública somente leitura (`/perfil/:username`);
+- aba "Jogadores" para buscar e visitar o perfil público de qualquer outra pessoa —
+  sempre somente leitura, com um selo indicando isso, nunca editável por quem está logado;
 - tela de configurações da conta (`/conta`) com verificação de e-mail, troca de
   username/e-mail/senha e edição dos dados pessoais;
 - recuperação de senha por token enviado por e-mail (`/esqueci-senha`, `/redefinir-senha`),
@@ -50,8 +52,9 @@ acesso irrestrito à plataforma. Por padrão: username `admin`, e-mail
 [`docs/claude/feat-1`](./docs/claude/feat-1/README.md) (cadastro/login),
 [`docs/claude/feat-2`](./docs/claude/feat-2/README.md) (perfil de usuário e conta),
 [`docs/claude/feat-3`](./docs/claude/feat-3/README.md) (integração com o IGDB, índice
-só-IGDB e busca) e [`docs/claude/feat-4`](./docs/claude/feat-4/README.md) (admin
-enviando jogos independentes).
+só-IGDB e busca), [`docs/claude/feat-4`](./docs/claude/feat-4/README.md) (admin
+enviando jogos independentes) e [`docs/claude/feat-5`](./docs/claude/feat-5/README.md)
+(aba "Jogadores", perfil de terceiros somente leitura).
 
 Para os e-mails (verificação de conta e "esqueci minha senha") funcionarem de
 verdade, preencha `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` no `.env` com as

@@ -9,6 +9,19 @@ export function createProfileRepository(pool) {
       return result.rows[0] ?? null;
     },
 
+    async searchUsers(query, { limit = 20 } = {}) {
+      const result = await pool.query(
+        `SELECT u.id, u.username, m.avatar_url AS "avatarUrl"
+         FROM users u
+         LEFT JOIN user_profile_media m ON m.user_id = u.id
+         WHERE u.username ILIKE $1
+         ORDER BY u.username ASC
+         LIMIT $2`,
+        [`%${query}%`, limit],
+      );
+      return result.rows;
+    },
+
     async getMedia(userId) {
       const result = await pool.query(
         `SELECT avatar_url AS "avatarUrl", cover_url AS "coverUrl"

@@ -49,6 +49,15 @@ export function createProfileService({ repository, publicUploadsPath = "/uploads
       return { user: toPublicUser(summary), ...(await buildProfile(repository, summary.id)) };
     },
 
+    async searchUsers(query, { excludeUsername } = {}) {
+      const trimmed = String(query ?? "").trim();
+      if (trimmed.length < 2) return [];
+      const results = await repository.searchUsers(trimmed, { limit: 20 });
+      return results
+        .filter((user) => !excludeUsername || user.username.toLowerCase() !== excludeUsername.toLowerCase())
+        .map((user) => ({ id: user.id, username: user.username, avatarUrl: user.avatarUrl ?? null }));
+    },
+
     async saveAvatar(userId, file) {
       if (!file) throw Object.assign(new Error("Envie um arquivo de imagem"), { status: 400 });
       const avatarUrl = `${publicUploadsPath}/avatars/${file.filename}`;

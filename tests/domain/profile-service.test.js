@@ -18,6 +18,11 @@ function fakeRepository({ games = [], users = [] } = {}) {
     async findUserSummaryByUsername(username) {
       return users.find((user) => user.username === username) ?? null;
     },
+    async searchUsers(query) {
+      return users
+        .filter((user) => user.username.toLowerCase().includes(query.toLowerCase()))
+        .map((user) => ({ id: user.id, username: user.username, avatarUrl: media.get(user.id)?.avatarUrl ?? null }));
+    },
     async getMedia(userId) {
       return media.get(userId) ?? null;
     },
@@ -165,5 +170,21 @@ describe("profile service", () => {
   it("404 ao buscar um perfil público inexistente", async () => {
     const service = createProfileService({ repository: fakeRepository({ games }) });
     await expect(service.getPublicProfile("ninguem")).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("busca jogadores por trecho do username, ignorando buscas muito curtas", async () => {
+    const users = [{ id: "user-1", username: "jogador1" }, { id: "user-2", username: "jogadorPro" }, { id: "user-3", username: "outraPessoa" }];
+    const service = createProfileService({ repository: fakeRepository({ games, users }) });
+    expect(await service.searchUsers("j")).toEqual([]);
+    const results = await service.searchUsers("jogador");
+    expect(results).toHaveLength(2);
+    expect(results.map((item) => item.username).sort()).toEqual(["jogador1", "jogadorPro"]);
+  });
+
+  it("busca de jogadores exclui o próprio usuário quando informado", async () => {
+    const users = [{ id: "user-1", username: "jogador1" }, { id: "user-2", username: "jogador2" }];
+    const service = createProfileService({ repository: fakeRepository({ games, users }) });
+    const results = await service.searchUsers("jogador", { excludeUsername: "jogador1" });
+    expect(results).toEqual([{ id: "user-2", username: "jogador2", avatarUrl: null }]);
   });
 });

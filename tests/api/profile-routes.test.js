@@ -67,6 +67,11 @@ function fakeProfileRepository(db) {
       const user = db.users.find((candidate) => candidate.username === username);
       return user ? { id: user.id, username: user.username } : null;
     },
+    async searchUsers(query) {
+      return db.users
+        .filter((user) => user.username.toLowerCase().includes(query.toLowerCase()))
+        .map((user) => ({ id: user.id, username: user.username, avatarUrl: db.media.get(user.id)?.avatarUrl ?? null }));
+    },
     async getMedia(userId) {
       return db.media.get(userId) ?? null;
     },
@@ -276,5 +281,21 @@ describe("profile routes", () => {
     expect(publicResponse.body.favorites).toHaveLength(1);
 
     await request(app).get("/api/profile/ninguem").expect(404);
+  });
+
+  it("busca jogadores por username, excluindo quem já está autenticado", async () => {
+    const db = createSharedDb();
+    const app = buildApp(db);
+    await signupAndLogin(app, "jogador1");
+    const agent2 = await signupAndLogin(app, "jogador2");
+
+    const anonResults = await request(app).get("/api/profile?q=jogador").expect(200);
+    expect(anonResults.body.users.map((user) => user.username).sort()).toEqual(["jogador1", "jogador2"]);
+
+    const ownResults = await agent2.get("/api/profile?q=jogador").expect(200);
+    expect(ownResults.body.users.map((user) => user.username)).toEqual(["jogador1"]);
+
+    const tooShort = await request(app).get("/api/profile?q=j").expect(200);
+    expect(tooShort.body.users).toEqual([]);
   });
 });

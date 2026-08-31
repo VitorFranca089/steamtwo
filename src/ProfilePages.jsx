@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, Gear, GameController, MagnifyingGlass, Plus, Trash, Trophy, UserCircle, WarningCircle, X } from "@phosphor-icons/react";
+import { ArrowRight, Camera, Eye, Gear, GameController, MagnifyingGlass, Plus, Trash, Trophy, UserCircle, UsersThree, WarningCircle, X } from "@phosphor-icons/react";
 import { SafeImage } from "./App.jsx";
 import { ToastStack, useToasts } from "./Toast.jsx";
 import {
@@ -12,11 +12,12 @@ import {
   removeFavorite,
   removeFromWishlist,
   searchGames,
+  searchUsers,
   uploadAvatar,
   uploadCover,
 } from "./profile-api.js";
 
-function useDebouncedSearch(query, delayMs = 300) {
+function useDebouncedSearch(query, fetcher, delayMs = 300) {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -29,20 +30,20 @@ function useDebouncedSearch(query, delayMs = 300) {
     const controller = new AbortController();
     setLoading(true);
     const timer = setTimeout(() => {
-      searchGames(query)
-        .then((games) => { if (!controller.signal.aborted) setResults(games); })
+      fetcher(query)
+        .then((items) => { if (!controller.signal.aborted) setResults(items); })
         .catch(() => { if (!controller.signal.aborted) setResults([]); })
         .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     }, delayMs);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [query, delayMs]);
+  }, [query, fetcher, delayMs]);
 
   return { results, loading };
 }
 
 function GamePicker({ onSelect, placeholder = "Buscar jogo…" }) {
   const [query, setQuery] = useState("");
-  const { results, loading } = useDebouncedSearch(query);
+  const { results, loading } = useDebouncedSearch(query, searchGames);
 
   return (
     <div className="game-picker">
@@ -252,7 +253,10 @@ function ProfileBody({ profile, editable, notify, onAvatarSaved, onCoverSaved, o
         </div>
       )}
       <div className="profile-title-row">
-        <h1 className="profile-username">{profile.user.username}</h1>
+        <h1 className="profile-username">
+          {profile.user.username}
+          {!editable && <span className="badge-readonly"><Eye size={13} weight="bold" /> Somente leitura</span>}
+        </h1>
         {editable && onSettings && (
           <button type="button" className="profile-settings-button" onClick={onSettings} aria-label="Configurações da conta">
             <Gear size={20} />
@@ -402,7 +406,46 @@ export function PublicProfilePage({ username, onBack }) {
 
   return (
     <section className="profile-page">
+      <button type="button" className="back-link" onClick={onBack}><ArrowRight size={17} /> Voltar</button>
       <ProfileBody profile={profile} editable={false} />
+    </section>
+  );
+}
+
+export function PlayersPage({ onOpenProfile }) {
+  const [query, setQuery] = useState("");
+  const { results, loading } = useDebouncedSearch(query, searchUsers);
+
+  return (
+    <section className="players-page">
+      <div className="page-intro">
+        <div>
+          <span className="eyebrow">COMUNIDADE STEAMTWO</span>
+          <h1>Jogadores</h1>
+          <p>Busque por outro jogador para ver o perfil público dele — favoritos, wishlist e conquistas, sem poder editar nada.</p>
+        </div>
+        <UsersThree size={58} weight="thin" />
+      </div>
+      <label className="players-search">
+        <MagnifyingGlass size={20} />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nome de usuário" aria-label="Buscar jogadores" />
+      </label>
+      {!query.trim() ? (
+        <div className="empty-state"><UsersThree size={34} /><h2>Encontre outros jogadores</h2><p>Digite pelo menos 2 letras do nome de usuário.</p></div>
+      ) : loading ? (
+        <div className="empty-state"><UsersThree size={34} /><h2>Buscando…</h2></div>
+      ) : results.length ? (
+        <div className="players-grid">
+          {results.map((user) => (
+            <button type="button" className="player-card" key={user.id} onClick={() => onOpenProfile(user.username)}>
+              <span className="player-avatar"><AvatarImage src={user.avatarUrl} /></span>
+              <span className="player-name">{user.username}</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-state"><UsersThree size={34} /><h2>Nenhum jogador encontrado</h2><p>Tente outro nome de usuário.</p></div>
+      )}
     </section>
   );
 }
